@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -77,6 +77,7 @@ function AppLayout() {
           <Route path="/about/instructor" element={<InstructorIntro />} />
           <Route path="/about/guide" element={<UsageGuide />} />
           <Route path="/about/pricing" element={<Pricing />} />
+          <Route path="/service" element={<Navigate to="/about/guide" replace />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
 

@@ -129,17 +129,20 @@
     color: var(--primary-blue);
 }
 
-/* ===== Nav Separator ===== */
-.nav-separator {
-    display: block;
-    width: 1px;
-    height: 20px;
-    background: var(--border-light);
-    margin: 0 4px;
-    flex-shrink: 0;
-}
-
 /* ===== About Variant ===== */
+.nav-variant-about {
+    margin-right: 6px;
+}
+.nav-variant-about::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 18px;
+    background: var(--border-light);
+}
 .nav-variant-about > .nav-link {
     color: #0F766E;
     font-weight: 600;
@@ -171,6 +174,19 @@
 }
 
 /* ===== Service Variant ===== */
+.nav-variant-service {
+    margin-left: 6px;
+}
+.nav-variant-service::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 18px;
+    background: var(--border-light);
+}
 .nav-variant-service > .nav-link {
     color: #B45309;
     font-weight: 600;

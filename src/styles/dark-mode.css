@@ -50,7 +50,8 @@ html[data-theme="dark"] .nav-variant-service > .nav-link::after { background: #F
 html[data-theme="dark"] .nav-dropdown-service { border-top-color: #FBBF24; }
 html[data-theme="dark"] .nav-dropdown-service .nav-dropdown-link i { color: #FBBF24; }
 html[data-theme="dark"] .nav-dropdown-service .nav-dropdown-link:hover { background: rgba(251, 191, 36, 0.08); color: #FCD34D; }
-html[data-theme="dark"] .nav-separator { background: var(--border-light); }
+html[data-theme="dark"] .nav-variant-about::after,
+html[data-theme="dark"] .nav-variant-service::before { background: var(--border-light); }
 html[data-theme="dark"] .login-link {
     background: var(--primary-blue-light);
     color: #FFFFFF;
