@@ -1,0 +1,1075 @@
+/* ============================================
+   JobPath - Study Tools Styles
+   ============================================ */
+
+/* ===== Study Page Layout ===== */
+.study-page {
+    padding: calc(var(--nav-height) + 32px) 0 80px;
+}
+
+/* ===== Study Tabs ===== */
+.study-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--border-light);
+    margin-bottom: 32px;
+    overflow-x: auto;
+}
+.study-tab {
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: var(--transition-base);
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.study-tab:hover { color: var(--primary-blue); }
+.study-tab.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+    font-weight: 600;
+}
+
+/* ===== Study Filters (오답노트) ===== */
+.study-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.study-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--bg-white);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: inherit;
+}
+.study-filter-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+    background: rgba(27, 58, 107, 0.03);
+}
+.study-filter-btn.active {
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    border-color: var(--primary-blue);
+}
+
+/* ===== Study Subject Badge ===== */
+.study-subject-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    margin-bottom: 16px;
+}
+.study-subject-badge i {
+    font-size: 13px;
+}
+.wrong-count-badge {
+    margin-left: 8px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(239, 68, 68, 0.12);
+    color: #DC2626;
+    border-radius: var(--radius-full);
+}
+
+/* ===== Wrong Answer Actions ===== */
+.wrong-answer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ===== Bookmark List ===== */
+.bookmark-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.bookmark-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.bookmark-count {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+.bookmark-filter {
+    display: flex;
+    gap: 8px;
+}
+.bookmark-filter-btn {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: inherit;
+}
+.bookmark-filter-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+.bookmark-filter-btn.active {
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    border-color: var(--primary-blue);
+}
+
+/* ===== Question Item (Compact) ===== */
+.question-item {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    transition: var(--transition-base);
+    cursor: pointer;
+}
+.question-item:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary-blue-light);
+}
+.question-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.question-item-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+}
+.question-item-subject {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    background: rgba(27, 58, 107, 0.06);
+    color: var(--primary-blue);
+}
+.question-item-subject[data-subject="counseling"] { background: rgba(59, 130, 246, 0.1); color: var(--color-counseling); }
+.question-item-subject[data-subject="psychology"] { background: rgba(139, 92, 246, 0.1); color: var(--color-psychology); }
+.question-item-subject[data-subject="jobinfo"] { background: rgba(16, 185, 129, 0.1); color: var(--color-jobinfo); }
+.question-item-subject[data-subject="labor-market"] { background: rgba(245, 158, 11, 0.1); color: var(--color-labor-market); }
+.question-item-subject[data-subject="labor-law"] { background: rgba(239, 68, 68, 0.1); color: var(--color-labor-law); }
+
+.question-item-text {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+.question-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-light);
+}
+.question-item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.question-item-action-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--bg-light-gray);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: inherit;
+}
+.question-item-action-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+.question-item-action-btn.remove {
+    color: var(--color-wrong);
+}
+.question-item-action-btn.remove:hover {
+    border-color: var(--color-wrong);
+    background: rgba(239, 68, 68, 0.04);
+}
+
+/* ===== Wrong Answer List ===== */
+.wrong-answer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.wrong-answer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.wrong-answer-sort {
+    display: flex;
+    gap: 8px;
+}
+.wrong-answer-sort-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: inherit;
+}
+.wrong-answer-sort-btn:hover {
+    border-color: var(--primary-blue);
+    color: var(--primary-blue);
+}
+.wrong-answer-sort-btn.active {
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    border-color: var(--primary-blue);
+}
+
+/* Wrong Count Badge */
+.wrong-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--color-wrong);
+    color: #FFFFFF;
+    border-radius: var(--radius-full);
+}
+.wrong-count.high {
+    background: #DC2626;
+}
+.wrong-count.medium {
+    background: #F59E0B;
+}
+.wrong-count.low {
+    background: #6B7280;
+}
+
+/* Resolved State */
+.question-item.resolved {
+    opacity: 0.6;
+    border-style: dashed;
+}
+.question-item.resolved .question-item-text {
+    text-decoration: line-through;
+    color: var(--text-light);
+}
+.resolved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-radius: var(--radius-full);
+}
+
+/* ===== Info Page ===== */
+.info-page {
+    padding-bottom: 80px;
+}
+.info-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 36px;
+    margin-bottom: 24px;
+}
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+.info-card-header h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+.info-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.info-card-icon.overview,
+.info-card-icon.pilgi,
+.info-card-icon.silgi,
+.info-card-icon.subjects,
+.info-card-icon.schedule,
+.info-card-icon.links,
+.info-card-icon.tips,
+.info-card-icon.stats,
+.info-card-icon.benefit,
+.info-card-icon.criteria {
+    background: rgba(27, 58, 107, 0.08);
+    color: var(--primary-blue);
+}
+
+/* ── 자격증 명칭 (한글 + 영문) ── */
+.info-cert-name {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--bg-subtle, rgba(59, 130, 246, 0.04));
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--primary-blue);
+    border-radius: 10px;
+}
+.info-cert-name-kr {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+}
+.info-cert-name-en {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-tertiary, #94A3B8);
+    letter-spacing: 0.01em;
+}
+
+.info-card-text {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+.info-card-text strong {
+    color: var(--text-primary);
+}
+.info-card-action {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Highlight Row */
+.info-highlight-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+.info-highlight {
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+}
+.info-highlight-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+.info-highlight-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-blue);
+}
+
+/* Info Grid 2 Column */
+.info-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* Info Table */
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.info-table th,
+.info-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+.info-table th {
+    font-weight: 600;
+    color: var(--text-light);
+    width: 120px;
+    white-space: nowrap;
+    background: transparent;
+}
+.info-table td {
+    color: var(--text-primary);
+}
+.info-table td strong {
+    color: var(--primary-blue);
+    font-weight: 700;
+}
+.info-table.schedule th {
+    font-weight: 700;
+    color: var(--text-light);
+    background: var(--bg-light-gray);
+    border-bottom: 2px solid var(--border-light);
+    width: auto;
+}
+.info-table.schedule td {
+    font-size: 14px;
+}
+.info-table.schedule tr:hover td {
+    background: var(--bg-light-gray);
+}
+.info-table-wrap {
+    overflow-x: auto;
+}
+
+/* Round Badge */
+.info-round-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    background: rgba(27, 58, 107, 0.08);
+    color: var(--primary-blue);
+    white-space: nowrap;
+}
+.info-round-badge.silgi {
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+}
+
+/* Note */
+.info-note {
+    font-size: 13px;
+    color: var(--text-light);
+    margin-top: 16px;
+}
+
+/* Alert Box */
+.info-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    background: rgba(239, 68, 68, 0.06);
+    border-left: 3px solid #EF4444;
+    font-size: 14px;
+    color: #B91C1C;
+    margin-top: 16px;
+}
+.info-alert i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+.info-alert span strong {
+    font-weight: 700;
+}
+.info-alert.info-alert-info {
+    background: rgba(59, 130, 246, 0.06);
+    border-left-color: #3B82F6;
+    color: #1D4ED8;
+}
+
+/* Tips Grid */
+.info-tips-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.info-tip-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 22px 24px;
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+.info-tip-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateX(4px);
+}
+.info-tip-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.info-tip-body {
+    flex: 1;
+    min-width: 0;
+}
+.info-tip-body h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.info-tip-body p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Subjects Grid */
+.info-subjects-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.info-subject-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--accent);
+    transition: var(--transition-base);
+}
+.info-subject-item:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateX(4px);
+}
+.info-subject-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.info-subject-body {
+    flex: 1;
+    min-width: 0;
+}
+.info-subject-body h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.info-subject-body p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+.info-subject-link {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    flex-shrink: 0;
+    transition: var(--transition-base);
+    text-decoration: none;
+}
+.info-subject-link:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #FFFFFF;
+}
+
+/* Links Grid */
+.info-links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.info-link-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px;
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition-base);
+}
+.info-link-card:hover {
+    border-color: var(--primary-blue);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+.info-link-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--bg-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--primary-blue);
+    flex-shrink: 0;
+}
+.info-link-card strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.info-link-card p {
+    font-size: 12px;
+    color: var(--text-light);
+    margin: 0;
+}
+.info-link-ext {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-light);
+    flex-shrink: 0;
+}
+
+/* ── Info Icon Variants ── */
+.info-card-icon.stats { background: rgba(234, 88, 12, 0.08); color: #EA580C; }
+.info-card-icon.benefit { background: rgba(217, 119, 6, 0.08); color: #D97706; }
+
+/* ── Schedule Badge Variants ── */
+.info-round-badge.register,
+.info-round-badge.exam,
+.info-round-badge.exam.silgi,
+.info-round-badge.announce {
+    background: rgba(27, 58, 107, 0.08);
+    color: var(--primary-blue);
+}
+
+/* Full Schedule Table */
+.info-table.full-schedule th {
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+.info-table.full-schedule th small {
+    display: block;
+    font-weight: 500;
+    color: var(--text-tertiary, #94A3B8);
+    font-size: 11px;
+}
+.info-table.full-schedule td {
+    font-size: 13px;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1.6;
+}
+.info-schedule-extra {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--primary-blue-light, #3D6DB5);
+    font-weight: 600;
+}
+
+/* ── Stats Table ── */
+.stats-table {
+    font-size: 13px;
+}
+.stats-table th {
+    text-align: center;
+}
+.stats-table td {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.stats-table td:first-child {
+    text-align: left;
+}
+.info-th-group {
+    border-bottom: 2px solid var(--border-light);
+}
+.info-th-group.pilgi {
+    color: var(--primary-blue);
+}
+.info-th-group.silgi {
+    color: var(--primary-blue-light, #3D6DB5);
+}
+.rate-pilgi {
+    color: var(--primary-blue) !important;
+}
+.rate-silgi {
+    color: var(--primary-blue-light, #3D6DB5) !important;
+}
+
+/* Stats Summary */
+.info-stats-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+}
+.info-stats-summary-item {
+    flex: 1 1 280px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.info-stats-summary-label {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--primary-blue);
+    color: #FFFFFF;
+    white-space: nowrap;
+}
+.info-stats-summary-item strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* ── 수험자 동향 ── */
+.info-trend-2024 {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-light);
+}
+.info-trend-2024 h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.info-trend-2024 h3 i {
+    color: var(--primary-blue);
+}
+.info-trend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+.info-trend-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+}
+.info-trend-card.male {
+    border-left: 4px solid var(--primary-blue);
+    background: rgba(27, 58, 107, 0.03);
+}
+.info-trend-card.female {
+    border-left: 4px solid var(--primary-blue-light, #3D6DB5);
+    background: rgba(61, 109, 181, 0.03);
+}
+.info-trend-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.info-trend-card.male .info-trend-icon {
+    background: rgba(27, 58, 107, 0.1);
+    color: var(--primary-blue);
+}
+.info-trend-card.female .info-trend-icon {
+    background: rgba(61, 109, 181, 0.1);
+    color: var(--primary-blue-light, #3D6DB5);
+}
+.info-trend-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.info-trend-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.info-trend-numbers {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.info-trend-rate {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.info-trend-rate strong {
+    color: var(--primary-blue);
+    font-weight: 800;
+}
+.info-trend-card.female .info-trend-rate strong {
+    color: var(--primary-blue-light, #3D6DB5);
+}
+
+/* ── Benefit Table ── */
+.benefit-table th {
+    width: auto;
+}
+.benefit-table th:first-child {
+    width: 280px;
+}
+.benefit-table td:first-child {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+/* ===== Study Statistics ===== */
+.study-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.study-stat-item {
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    text-align: center;
+}
+.study-stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    line-height: 1;
+    margin-bottom: 4px;
+}
+.study-stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* ===== Empty State ===== */
+.study-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+.study-empty-icon {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+.study-empty-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.study-empty-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    max-width: 360px;
+}
+
+/* ===== Info Level Tabs (1급/2급 전환) ===== */
+.info-level-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    background: var(--bg-light-gray);
+    padding: 6px;
+    border-radius: var(--radius-lg);
+    width: fit-content;
+}
+.info-level-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-family: inherit;
+}
+.info-level-tab:hover {
+    color: var(--primary-blue);
+    background: rgba(27, 58, 107, 0.04);
+}
+.info-level-tab.active {
+    color: #FFFFFF;
+    background: var(--primary-blue);
+    box-shadow: 0 2px 8px rgba(27, 58, 107, 0.25);
+}
+.info-level-tab i {
+    font-size: 14px;
+}
+
+/* ===== 출제기준 (Criteria) ===== */
+
+.info-criteria-subtitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.info-criteria-subtitle i {
+    color: var(--primary-blue);
+    font-size: 14px;
+}
+
+.info-criteria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+.info-criteria-card {
+    background: var(--bg-light-gray);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    border-left: 4px solid var(--accent, var(--primary-blue));
+    transition: var(--transition-base);
+}
+.info-criteria-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+.info-criteria-card h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.info-criteria-card--silgi {
+    border-left-color: #10B981;
+}
+.info-criteria-card--silgi h4 {
+    margin-bottom: 0;
+}
+.info-criteria-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.info-criteria-items li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding-left: 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.info-criteria-items li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent, var(--primary-blue));
+    opacity: 0.5;
+}
+.info-criteria-badge-new {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    background: rgba(27, 58, 107, 0.1);
+    color: var(--primary-blue);
+    border-radius: var(--radius-full);
+    letter-spacing: 0.02em;
+}

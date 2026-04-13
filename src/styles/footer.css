@@ -1,0 +1,201 @@
+/* ============================================
+   JobPath - Footer (3-Column Grid)
+   ============================================ */
+
+.footer {
+    background: linear-gradient(180deg, #111827 0%, #0A0F1A 100%);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 60px 0 32px;
+    margin-top: 80px;
+    position: relative;
+}
+
+/* Grid: 3 columns */
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.2fr;
+    gap: 48px;
+    margin-bottom: 40px;
+}
+
+/* Brand / Logo */
+.footer-brand p {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.7;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.footer-logo {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.brand-main { color: #FFFFFF; }
+.brand-sub { color: rgba(255, 255, 255, 0.6); }
+
+.footer-desc {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.7;
+}
+
+/* Family Site */
+.footer-family {
+    margin-top: 16px;
+}
+
+.footer-family select {
+    width: 100%;
+    max-width: 220px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.footer-family select:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.footer-family select option {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+/* Section Heading */
+.footer-heading {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+
+/* Quick Links */
+.footer-quick-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.footer-quick-links a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+    line-height: 1.6;
+}
+
+.footer-quick-links a:hover {
+    color: #93C5FD;
+}
+
+/* Contact */
+.footer-contact {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-contact li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.footer-contact li svg {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.footer-contact a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-contact a:hover {
+    color: #93C5FD;
+}
+
+/* Legal Links */
+.footer-legal-links {
+    margin-top: 16px;
+    display: flex;
+    gap: 16px;
+}
+
+.footer-legal-links a {
+    color: rgba(255, 255, 255, 0.45);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+}
+
+.footer-legal-links a:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Bottom Bar */
+.footer-bottom {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+}
+
+/* Back to top */
+.back-to-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-base);
+    z-index: 100;
+    border: none;
+    cursor: pointer;
+}
+
+.back-to-top:hover {
+    transform: translateY(-2px);
+    background: var(--primary-blue-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer { padding: 40px 0 24px; }
+    .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+    .footer-quick-links { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+    .footer-quick-links { grid-template-columns: 1fr; }
+    .footer-bottom { font-size: 12px; }
+    .back-to-top { bottom: 20px; right: 20px; width: 40px; height: 40px; }
+}

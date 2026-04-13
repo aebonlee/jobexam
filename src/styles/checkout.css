@@ -1,0 +1,291 @@
+/* ============================================
+   JobPath - Checkout / Payment Styles
+   ============================================ */
+
+/* ===== Checkout Container ===== */
+.checkout-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 80px;
+}
+
+/* ===== Checkout Section ===== */
+.checkout-section {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    margin-bottom: 24px;
+}
+.checkout-section h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.checkout-section h2 i {
+    color: var(--primary-blue);
+}
+
+/* ===== Plan Selection Cards ===== */
+.checkout-plans {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.checkout-plan-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    transition: var(--transition-base);
+}
+.checkout-plan-card:hover {
+    border-color: var(--border-medium);
+}
+.checkout-plan-card.selected {
+    border-color: var(--primary-blue);
+    background: rgba(27, 58, 107, 0.03);
+}
+.checkout-plan-card.recommended {
+    position: relative;
+}
+.checkout-plan-card.recommended::after {
+    content: 'BEST';
+    position: absolute;
+    top: -8px;
+    right: 16px;
+    background: var(--primary-gradient);
+    color: #FFF;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+}
+.checkout-plan-info {
+    flex: 1;
+}
+.checkout-plan-info h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.checkout-plan-info p {
+    font-size: 13px;
+    color: var(--text-light);
+}
+.checkout-plan-price {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-blue);
+    margin-right: 12px;
+}
+
+/* ===== Checkout Summary ===== */
+.checkout-summary {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.checkout-summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 18px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+}
+.checkout-summary-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 18px;
+    background: var(--bg-light-gray);
+    font-size: 16px;
+}
+
+/* ===== Checkout Fields ===== */
+.checkout-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.checkout-fields .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+.checkout-fields .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-white);
+    transition: var(--transition-base);
+}
+.checkout-fields .form-group input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
+}
+
+/* ===== Checkout Submit ===== */
+.checkout-submit {
+    margin-top: 8px;
+    padding: 16px 24px !important;
+    font-size: 16px !important;
+}
+
+/* ===== Checkout Empty ===== */
+.checkout-empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-light);
+}
+.checkout-empty p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+/* ===== Confirmation Card ===== */
+.confirmation-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 48px 36px;
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.confirmation-icon {
+    font-size: 64px;
+    color: var(--color-pass);
+    margin-bottom: 20px;
+}
+.confirmation-card h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+.confirmation-desc {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+.confirmation-details {
+    text-align: left;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 32px;
+}
+.confirmation-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-light);
+}
+.confirmation-row:last-child {
+    border-bottom: none;
+}
+.confirmation-row strong {
+    color: var(--text-primary);
+}
+.confirmation-row.total {
+    background: var(--bg-light-gray);
+    font-size: 16px;
+    font-weight: 700;
+}
+.confirmation-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* ===== Order List ===== */
+.order-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.order-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition-base);
+}
+.order-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-light-gray);
+}
+.order-number {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-right: 12px;
+}
+.order-date {
+    font-size: 13px;
+    color: var(--text-light);
+}
+.order-card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+.order-plan {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.order-plan strong {
+    font-size: 15px;
+    color: var(--text-primary);
+}
+.badge-active {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+.order-amount {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-blue);
+}
+.order-card-footer {
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text-light);
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-light-gray);
+}
+.order-card-footer.cancel {
+    color: var(--color-fail);
+}
