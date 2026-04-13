@@ -59,6 +59,12 @@ export const EXAM_CONFIG_1 = {
 };
 
 export const NAV_ITEMS = [
+  { path: '/about', label: 'About', icon: 'fa-solid fa-circle-info',
+    children: [
+      { path: '/about', label: '사이트 소개' },
+      { path: '/about/instructor', label: '제작자 소개' },
+    ]
+  },
   { path: '/info', label: '시험안내', icon: 'fa-solid fa-clipboard-list',
     children: [
       { path: '/pilgi', label: '필기 안내' },
@@ -86,10 +92,8 @@ export const NAV_ITEMS = [
       { path: '/wrong-answers', label: '오답노트' },
     ]
   },
-  { path: '/about', label: '소개', icon: 'fa-solid fa-circle-info',
+  { path: '/service', label: '서비스', icon: 'fa-solid fa-concierge-bell',
     children: [
-      { path: '/about', label: '사이트 소개' },
-      { path: '/about/instructor', label: '제작자 소개' },
       { path: '/about/guide', label: '이용 안내' },
       { path: '/about/pricing', label: '요금제' },
     ]
