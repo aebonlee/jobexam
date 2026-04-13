@@ -71,12 +71,16 @@ export default function Navbar() {
           </Link>
 
           <ul className="nav-links">
-            {NAV_ITEMS.map(item => {
+            {NAV_ITEMS.map((item, idx) => {
               const isActive = item.children
                 ? item.children.some(child => location.pathname === child.path || location.pathname.startsWith(child.path + '/'))
                 : location.pathname === item.path;
+              const variant = (item as any).variant || '';
+              const prevVariant = idx > 0 ? (NAV_ITEMS[idx - 1] as any).variant || '' : '';
+              const showSep = (variant !== prevVariant) && idx > 0;
               return (
-                <li key={item.label} className={`nav-item ${item.children ? 'nav-item-has-children' : ''}`}>
+                <li key={item.label} className={`nav-item ${item.children ? 'nav-item-has-children' : ''} ${variant ? `nav-variant-${variant}` : ''}`}>
+                  {showSep && <span className="nav-separator" />}
                   <Link
                     to={item.path}
                     className={`nav-link ${isActive ? 'active' : ''}`}
@@ -84,10 +88,13 @@ export default function Navbar() {
                     {item.label}
                   </Link>
                   {item.children && (
-                    <ul className="nav-dropdown">
+                    <ul className={`nav-dropdown ${variant ? `nav-dropdown-${variant}` : ''}`}>
                       {item.children.map(child => (
                         <li key={child.path}>
-                          <Link to={child.path} className="nav-dropdown-link">{child.label}</Link>
+                          <Link to={child.path} className="nav-dropdown-link">
+                            {(child as any).icon && <i className={(child as any).icon} />}
+                            {child.label}
+                          </Link>
                         </li>
                       ))}
                     </ul>

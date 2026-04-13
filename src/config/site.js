@@ -59,10 +59,10 @@ export const EXAM_CONFIG_1 = {
 };
 
 export const NAV_ITEMS = [
-  { path: '/about', label: 'About', icon: 'fa-solid fa-circle-info',
+  { path: '/about', label: 'About', icon: 'fa-solid fa-circle-info', variant: 'about',
     children: [
-      { path: '/about', label: '사이트 소개' },
-      { path: '/about/instructor', label: '제작자 소개' },
+      { path: '/about', label: '사이트 소개', icon: 'fa-solid fa-building' },
+      { path: '/about/instructor', label: '제작자 소개', icon: 'fa-solid fa-chalkboard-user' },
     ]
   },
   { path: '/info', label: '시험안내', icon: 'fa-solid fa-clipboard-list',
@@ -92,10 +92,10 @@ export const NAV_ITEMS = [
       { path: '/wrong-answers', label: '오답노트' },
     ]
   },
-  { path: '/service', label: '서비스', icon: 'fa-solid fa-concierge-bell',
+  { path: '/service', label: '서비스', icon: 'fa-solid fa-concierge-bell', variant: 'service',
     children: [
-      { path: '/about/guide', label: '이용 안내' },
-      { path: '/about/pricing', label: '요금제' },
+      { path: '/about/guide', label: '이용 안내', icon: 'fa-solid fa-book' },
+      { path: '/about/pricing', label: '요금제', icon: 'fa-solid fa-tag' },
     ]
   },
 ];
