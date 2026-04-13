@@ -43,6 +43,7 @@ import StudySummary from './pages/learn/StudySummary';
 import PracticeHome from './pages/practice/PracticeHome';
 
 import ServiceIntro from './pages/about/ServiceIntro';
+import InstructorIntro from './pages/about/InstructorIntro';
 import UsageGuide from './pages/about/UsageGuide';
 import Pricing from './pages/about/Pricing';
 import Terms from './pages/about/Terms';
@@ -73,6 +74,7 @@ function AppLayout() {
 
           {/* 무료: 서비스 */}
           <Route path="/about" element={<ServiceIntro />} />
+          <Route path="/about/instructor" element={<InstructorIntro />} />
           <Route path="/about/guide" element={<UsageGuide />} />
           <Route path="/about/pricing" element={<Pricing />} />
           <Route path="/terms" element={<Terms />} />

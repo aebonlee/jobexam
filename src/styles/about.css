@@ -159,6 +159,211 @@
     background: rgba(255, 255, 255, 0.9);
 }
 
+/* ===== Instructor Profile ===== */
+.instructor-profile {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    padding: 32px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+.instructor-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.instructor-avatar i {
+    font-size: 44px;
+    color: #FFFFFF;
+}
+.instructor-info h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.instructor-degree {
+    font-size: 15px;
+    color: var(--primary-blue);
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.instructor-position {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+.instructor-specialties h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.instructor-specialties h3 i {
+    color: #F59E0B;
+}
+.instructor-specialties ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.instructor-specialties li {
+    padding: 4px 14px;
+    background: rgba(27, 58, 107, 0.06);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+/* ===== Instructor Stats ===== */
+.instructor-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+}
+.instructor-stat-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px 16px;
+    text-align: center;
+}
+.instructor-stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--primary-blue);
+    margin-bottom: 4px;
+}
+.instructor-stat-card .stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ===== Instructor Sections Grid ===== */
+.instructor-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.instructor-sections .about-section {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 0;
+}
+.instructor-sections .about-section h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.instructor-sections .about-section h3 i {
+    color: var(--primary-blue);
+}
+.instructor-sections .about-section ul {
+    list-style: none;
+    padding: 0;
+}
+.instructor-sections .about-section li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    padding: 2px 0;
+    padding-left: 16px;
+    position: relative;
+}
+.instructor-sections .about-section li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    opacity: 0.4;
+}
+
+/* ===== Instructor Contact ===== */
+.instructor-contact {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 48px;
+}
+.instructor-contact h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.instructor-contact h3 i {
+    color: var(--primary-blue);
+}
+.instructor-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.instructor-contact-item i {
+    width: 20px;
+    text-align: center;
+    color: var(--primary-blue);
+}
+.instructor-contact-item a {
+    color: var(--primary-blue);
+    text-decoration: none;
+}
+.instructor-contact-item a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Instructor Responsive ===== */
+@media (max-width: 768px) {
+    .instructor-profile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .instructor-specialties ul {
+        justify-content: center;
+    }
+    .instructor-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .instructor-sections {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ===== Guide Steps ===== */
 .guide-steps {
     display: flex;

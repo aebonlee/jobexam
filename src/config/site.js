@@ -86,9 +86,10 @@ export const NAV_ITEMS = [
       { path: '/wrong-answers', label: '오답노트' },
     ]
   },
-  { path: '/about', label: '서비스', icon: 'fa-solid fa-circle-info',
+  { path: '/about', label: '소개', icon: 'fa-solid fa-circle-info',
     children: [
-      { path: '/about', label: '서비스 소개' },
+      { path: '/about', label: '사이트 소개' },
+      { path: '/about/instructor', label: '제작자 소개' },
       { path: '/about/guide', label: '이용 안내' },
       { path: '/about/pricing', label: '요금제' },
     ]

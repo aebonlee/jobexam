@@ -13,20 +13,20 @@ const FEATURES = [
 export default function ServiceIntro() {
   return (
     <>
-      <SEOHead title="서비스 소개" description="JobPath 직업상담사 2급 시험 준비 플랫폼 소개" />
+      <SEOHead title="사이트 소개" description="JobExam 직업상담사 1급·2급 시험 준비 플랫폼 소개" />
 
       <div className="about-hero">
         <div className="container">
-          <h1><i className="fa-solid fa-circle-info" /> 서비스 소개</h1>
-          <p>직업상담사 2급 시험 합격을 위한 올인원 CBT 학습 플랫폼</p>
+          <h1><i className="fa-solid fa-circle-info" /> 사이트 소개</h1>
+          <p>직업상담사 1급·2급 시험 합격을 위한 올인원 CBT 학습 플랫폼</p>
         </div>
       </div>
 
       <div className="container">
         <div className="about-section">
-          <h2><i className="fa-solid fa-bullseye" /> JobPath란?</h2>
+          <h2><i className="fa-solid fa-bullseye" /> JobExam이란?</h2>
           <p>
-            JobPath는 직업상담사 2급 자격증 시험 준비를 위한 온라인 CBT 학습 플랫폼입니다.
+            JobExam은 직업상담사 1급·2급 자격증 시험 준비를 위한 온라인 CBT 학습 플랫폼입니다.
             필기 모의시험, 실기 연습, 과목별 이론 학습, 오답노트, 합격 예측까지
             시험 준비에 필요한 모든 기능을 제공합니다.
           </p>
@@ -64,7 +64,7 @@ export default function ServiceIntro() {
 
         <div className="about-cta">
           <h3>지금 시작하세요</h3>
-          <p>합리적인 가격으로 직업상담사 2급 시험을 준비하세요.</p>
+          <p>합리적인 가격으로 직업상담사 시험을 준비하세요.</p>
           <Link to="/about/pricing" className="btn btn-lg">요금제 보기</Link>
         </div>
       </div>
