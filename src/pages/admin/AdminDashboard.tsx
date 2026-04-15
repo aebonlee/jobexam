@@ -63,33 +63,41 @@ export default function AdminDashboard() {
     if (couponsRes.data) setCoupons(couponsRes.data);
     if (redemptionsRes.data) setRedemptions(redemptionsRes.data);
 
-    // 회원 목록: 주문 + 쿠폰 사용 기록에서만 통합 (활동이 있는 회원만)
-    // 프로필은 이름 조회용으로만 사용
-    const profileNameMap: Record<string, string> = {};
+    // 회원 목록: 프로필 기반 + 주문/쿠폰 데이터 보강
+    const emailMap: Record<string, { email: string; name: string; phone: string; firstSeen: string; lastActivity: string; source: string }> = {};
+
+    // 프로필에서 시작 (모든 가입자)
     (profilesRes.data || []).forEach((p: any) => {
       const e = (p.email || '').toLowerCase();
-      if (e && p.name) profileNameMap[e] = p.name;
+      if (!e) return;
+      emailMap[e] = { email: e, name: p.name || '', phone: '', firstSeen: p.created_at, lastActivity: p.created_at, source: '가입' };
     });
 
-    const emailMap: Record<string, { email: string; name: string; firstSeen: string; source: string }> = {};
+    // 주문에서 보강 (전화번호, 이름, 마지막활동일)
     (ordersRes.data || []).forEach((o: any) => {
       const e = (o.user_email || '').toLowerCase();
       if (!e) return;
       if (!emailMap[e]) {
-        emailMap[e] = { email: e, name: o.user_name || profileNameMap[e] || '', firstSeen: o.created_at, source: '주문' };
-      } else if (!emailMap[e].name && o.user_name) {
-        emailMap[e].name = o.user_name;
+        emailMap[e] = { email: e, name: o.user_name || '', phone: o.user_phone || '', firstSeen: o.created_at, lastActivity: o.created_at, source: '주문' };
+      } else {
+        if (!emailMap[e].name && o.user_name) emailMap[e].name = o.user_name;
+        if (!emailMap[e].phone && o.user_phone) emailMap[e].phone = o.user_phone;
+        if (new Date(o.created_at) > new Date(emailMap[e].lastActivity)) emailMap[e].lastActivity = o.created_at;
       }
     });
+
+    // 쿠폰 사용에서 보강
     (redemptionsRes.data || []).forEach((r: any) => {
       const e = (r.user_email || '').toLowerCase();
-      if (e && !emailMap[e]) emailMap[e] = { email: e, name: profileNameMap[e] || '', firstSeen: r.created_at, source: '쿠폰' };
+      if (!e) return;
+      if (!emailMap[e]) {
+        emailMap[e] = { email: e, name: '', phone: '', firstSeen: r.created_at, lastActivity: r.created_at, source: '쿠폰' };
+      } else {
+        if (new Date(r.created_at) > new Date(emailMap[e].lastActivity)) emailMap[e].lastActivity = r.created_at;
+      }
     });
-    // 프로필에서 이름 보완
-    Object.values(emailMap).forEach((m: any) => {
-      if (!m.name && profileNameMap[m.email]) m.name = profileNameMap[m.email];
-    });
-    setMembers(Object.values(emailMap).sort((a, b) => new Date(b.firstSeen).getTime() - new Date(a.firstSeen).getTime()));
+
+    setMembers(Object.values(emailMap).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()));
     setLoading(false);
   };
 
@@ -263,13 +271,14 @@ export default function AdminDashboard() {
     setProgressLoading(false);
   };
 
-  // 회원 학습현황: 검색 필터
+  // 회원 학습현황: 검색 필터 (이름/이메일/전화번호)
   const filteredMembers = useMemo(() => {
     if (!progressSearch.trim()) return members;
     const q = progressSearch.toLowerCase();
     return members.filter(m =>
       (m.name || '').toLowerCase().includes(q) ||
-      (m.email || '').toLowerCase().includes(q)
+      (m.email || '').toLowerCase().includes(q) ||
+      (m.phone || '').includes(q)
     );
   }, [members, progressSearch]);
 
@@ -689,37 +698,78 @@ export default function AdminDashboard() {
         {/* 회원 학습현황 Tab */}
         {activeTab === 'progress' && (
           <div className="admin-panel">
-            <h2><i className="fa-solid fa-chart-line" /> 회원 학습현황</h2>
+            <h2><i className="fa-solid fa-chart-line" /> 회원 학습현황 ({filteredMembers.length}명)</h2>
 
             {/* 검색바 */}
             <input
               type="text"
               className="admin-member-search"
-              placeholder="이름 또는 이메일로 회원 검색..."
+              placeholder="이름, 이메일, 전화번호로 검색..."
               value={progressSearch}
               onChange={e => setProgressSearch(e.target.value)}
             />
 
-            {/* 검색 결과 목록 */}
-            {progressSearch.trim() && (
-              <div className="admin-member-list">
-                {filteredMembers.length === 0 ? (
-                  <p className="admin-empty" style={{ padding: '16px 0' }}>검색 결과가 없습니다.</p>
-                ) : (
-                  filteredMembers.slice(0, 20).map(m => (
-                    <div
-                      key={m.email}
-                      className={`admin-member-item ${selectedMember?.email === m.email ? 'active' : ''}`}
-                      onClick={() => handleSelectMember(m)}
-                    >
-                      <div className="admin-member-item-info">
-                        <strong>{m.name || '(이름 없음)'}</strong>
-                        <span>{m.email}</span>
-                      </div>
-                      <span className="table-badge">{m.source}</span>
-                    </div>
-                  ))
-                )}
+            {/* 회원 목록 테이블 */}
+            {filteredMembers.length === 0 ? (
+              <p className="admin-empty">검색 결과가 없습니다.</p>
+            ) : (
+              <div className="admin-table-wrap" style={{ maxHeight: selectedMember ? '320px' : '600px', overflowY: 'auto' }}>
+                <table className="admin-table admin-progress-table">
+                  <thead>
+                    <tr>
+                      <th>회원명</th>
+                      <th>이메일</th>
+                      <th>전화번호</th>
+                      <th>가입일</th>
+                      <th>마지막 활동</th>
+                      <th>비고</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredMembers.map(member => {
+                      const email = member.email;
+                      const isSelected = selectedMember?.email === email;
+                      const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
+                      const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
+                      const latestPaid = paidOrders[0];
+                      const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
+                      const userRedemptions = redemptions.filter(r => (r.user_email || '').toLowerCase() === email);
+                      let couponActive = false;
+                      if (userRedemptions.length > 0) {
+                        for (const r of userRedemptions) {
+                          const cp = coupons.find(c => c.id === r.coupon_id);
+                          const days = cp?.days || 1;
+                          const exp = new Date(new Date(r.created_at).getTime() + days * 86400000);
+                          if (exp > new Date()) { couponActive = true; break; }
+                        }
+                      }
+                      const isActive = orderActive || couponActive;
+                      const statusText = isActive
+                        ? (couponActive && !orderActive ? '쿠폰 이용중' : '이용중')
+                        : (userOrders.length > 0 ? '만료' : '미결제');
+
+                      return (
+                        <tr
+                          key={email}
+                          className={isSelected ? 'selected' : ''}
+                          onClick={() => handleSelectMember(member)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td>
+                            <span className="admin-member-name">{member.name || '-'}</span>
+                          </td>
+                          <td>{email}</td>
+                          <td>{member.phone || '-'}</td>
+                          <td>{new Date(member.firstSeen).toLocaleDateString('ko-KR')}</td>
+                          <td>{new Date(member.lastActivity).toLocaleDateString('ko-KR')}</td>
+                          <td>
+                            <span className={`table-badge ${isActive ? 'pass' : ''}`}>{statusText}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 

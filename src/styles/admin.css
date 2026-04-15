@@ -456,6 +456,29 @@
   color: var(--text-light);
 }
 
+/* Progress table - clickable member name */
+.admin-member-name {
+  color: var(--primary-blue);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.admin-member-name:hover {
+  color: #2563EB;
+  text-decoration: underline;
+}
+
+/* Progress table - selected row */
+.admin-progress-table tr.selected td {
+  background: rgba(27, 58, 107, 0.08);
+  font-weight: 600;
+}
+
+.admin-progress-table tr.selected td:first-child {
+  border-left: 3px solid var(--primary-blue);
+}
+
 .admin-member-dashboard {
   margin-top: 24px;
   padding-top: 24px;
