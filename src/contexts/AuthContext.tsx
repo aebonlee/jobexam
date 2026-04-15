@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, setSharedSession, getSharedSession, clearSharedSession } from '../lib/supabase';
+import { supabase, setSharedSession, getSharedSession, clearSharedSession, TABLES } from '../lib/supabase';
 import { useToast } from './ToastContext';
-import { ADMIN_EMAILS } from '../config/admin';
+import { SUPERADMIN_EMAILS } from '../config/admin';
 
 const AuthContext = createContext({});
 
@@ -22,11 +22,23 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
 
       if (currentUser) {
+        // 최고관리자 이메일 fallback (DB 장애 시에도 접근 보장)
         const allEmails = [
-          session?.user?.email,
-          session?.user?.user_metadata?.email,
+          currentUser.email,
+          currentUser.user_metadata?.email,
         ].filter(Boolean).map(e => (e as string).toLowerCase());
-        setIsAdmin(allEmails.some(e => ADMIN_EMAILS.includes(e)));
+        const isSuperByEmail = allEmails.some(e => SUPERADMIN_EMAILS.includes(e));
+
+        try {
+          const { data } = await supabase
+            .from(TABLES.PROFILES)
+            .select('role')
+            .eq('id', currentUser.id)
+            .single();
+          setIsAdmin(isSuperByEmail || data?.role === 'admin' || data?.role === 'superadmin');
+        } catch {
+          setIsAdmin(isSuperByEmail);
+        }
       } else {
         setIsAdmin(false);
       }
