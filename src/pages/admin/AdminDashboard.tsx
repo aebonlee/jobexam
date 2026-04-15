@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import SEOHead from '../../components/SEOHead';
 import { supabase, TABLES } from '../../lib/supabase';
 import { useToast } from '../../contexts/ToastContext';
 import { RadarChart, BarChart } from '../../components/ScoreChart';
 import { SUBJECTS } from '../../config/site';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import '../../styles/admin.css';
 
 function generateCouponCode(): string {
@@ -41,6 +43,8 @@ export default function AdminDashboard() {
   const [memberSilgi, setMemberSilgi] = useState<any[]>([]);
   const [memberAvgScores, setMemberAvgScores] = useState<Record<string, number>>({});
   const [progressLoading, setProgressLoading] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const modalBodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadData();
@@ -207,6 +211,122 @@ export default function AdminDashboard() {
     }
     return list;
   }, [orders, orderFilter, orderSearch]);
+
+  // PDF 다운로드
+  const handleDownloadPDF = useCallback(async () => {
+    if (!modalBodyRef.current || !selectedMember) return;
+    setPdfExporting(true);
+    try {
+      const canvas = await html2canvas(modalBodyRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const contentWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+      // 제목 추가
+      pdf.setFontSize(14);
+      pdf.text(`${selectedMember.name || selectedMember.email} - 학습 현황`, margin, margin + 5);
+      pdf.setFontSize(9);
+      pdf.setTextColor(128);
+      pdf.text(`출력일: ${new Date().toLocaleDateString('ko-KR')} ${new Date().toLocaleTimeString('ko-KR')}`, margin, margin + 11);
+      pdf.setTextColor(0);
+
+      const startY = margin + 16;
+      const availableHeight = pageHeight - startY - margin;
+
+      if (imgHeight <= availableHeight) {
+        pdf.addImage(imgData, 'PNG', margin, startY, contentWidth, imgHeight);
+      } else {
+        // 여러 페이지로 분할
+        let remainingHeight = imgHeight;
+        let srcY = 0;
+        let isFirstPage = true;
+
+        while (remainingHeight > 0) {
+          const currentAvailable = isFirstPage ? availableHeight : pageHeight - margin * 2;
+          const sliceHeight = Math.min(remainingHeight, currentAvailable);
+          const sliceRatio = sliceHeight / imgHeight;
+          const srcHeight = canvas.height * sliceRatio;
+
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = srcHeight;
+          const ctx = sliceCanvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, canvas.width, srcHeight);
+            const sliceData = sliceCanvas.toDataURL('image/png');
+            if (!isFirstPage) pdf.addPage();
+            pdf.addImage(sliceData, 'PNG', margin, isFirstPage ? startY : margin, contentWidth, sliceHeight);
+          }
+
+          srcY += srcHeight;
+          remainingHeight -= sliceHeight;
+          isFirstPage = false;
+        }
+      }
+
+      const fileName = `학습현황_${selectedMember.name || selectedMember.email}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      showToast('PDF가 다운로드되었습니다.', 'success');
+    } catch (err) {
+      console.error('PDF 생성 오류:', err);
+      showToast('PDF 생성에 실패했습니다.', 'error');
+    }
+    setPdfExporting(false);
+  }, [selectedMember, showToast]);
+
+  // 인쇄
+  const handlePrint = useCallback(() => {
+    if (!modalBodyRef.current || !selectedMember) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.', 'error');
+      return;
+    }
+
+    const content = modalBodyRef.current.innerHTML;
+    printWindow.document.write(`<!DOCTYPE html>
+<html><head><title>${selectedMember.name || selectedMember.email} - 학습 현황</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #1a1a2e; }
+  .print-header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb; }
+  .print-header h2 { font-size: 20px; margin-bottom: 4px; }
+  .print-header p { font-size: 12px; color: #888; }
+  .dashboard-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .stat-number { font-size: 22px; font-weight: 800; }
+  .dashboard-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dashboard-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .dashboard-card h4 { font-size: 14px; margin-bottom: 12px; }
+  canvas { max-width: 100% !important; height: auto !important; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 6px 8px; font-size: 11px; color: #888; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 6px 8px; border-bottom: 1px solid #f3f4f6; }
+  .table-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .table-badge.pass { background: rgba(16,185,129,0.1); color: #059669; }
+  .table-badge.fail { background: rgba(239,68,68,0.1); color: #DC2626; }
+  .admin-empty { text-align: center; color: #aaa; padding: 20px 0; }
+  @media print { body { padding: 0; } }
+</style></head><body>
+<div class="print-header">
+  <h2>${selectedMember.name || selectedMember.email} - 학습 현황</h2>
+  <p>출력일: ${new Date().toLocaleDateString('ko-KR')} ${new Date().toLocaleTimeString('ko-KR')}</p>
+</div>
+${content}
+<script>window.onload=function(){setTimeout(function(){window.print();window.close();},500);}<\/script>
+</body></html>`);
+    printWindow.document.close();
+  }, [selectedMember, showToast]);
 
   // 회원 학습현황: 회원 선택 시 데이터 로드
   const handleSelectMember = async (member: any) => {
@@ -775,11 +895,21 @@ export default function AdminDashboard() {
                     <h3>
                       <i className="fa-solid fa-user" /> {selectedMember.name || selectedMember.email} 학습 현황
                     </h3>
-                    <button className="admin-modal-close" onClick={() => setSelectedMember(null)}>
-                      <i className="fa-solid fa-xmark" />
-                    </button>
+                    <div className="admin-modal-actions">
+                      <button className="admin-modal-btn" onClick={handleDownloadPDF} disabled={progressLoading || pdfExporting} title="PDF 다운로드">
+                        {pdfExporting ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-file-pdf" />}
+                        <span>PDF</span>
+                      </button>
+                      <button className="admin-modal-btn" onClick={handlePrint} disabled={progressLoading} title="인쇄">
+                        <i className="fa-solid fa-print" />
+                        <span>인쇄</span>
+                      </button>
+                      <button className="admin-modal-close" onClick={() => setSelectedMember(null)}>
+                        <i className="fa-solid fa-xmark" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="admin-modal-body">
+                  <div className="admin-modal-body" ref={modalBodyRef}>
                     {progressLoading ? (
                       <div style={{ textAlign: 'center', padding: '40px 0' }}>
                         <div className="loading-spinner" />
