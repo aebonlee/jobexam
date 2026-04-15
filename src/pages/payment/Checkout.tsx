@@ -70,6 +70,7 @@ function CheckoutContent() {
       // Supabase에 주문 저장
       const now = new Date();
       let insertFailed = false;
+      const failedPayloads: Record<string, unknown>[] = [];
       for (let idx = 0; idx < items.length; idx++) {
         const item = items[idx];
         const itemOrderNumber = items.length > 1 ? `${orderNumber}-${idx + 1}` : orderNumber;
@@ -92,6 +93,13 @@ function CheckoutContent() {
           expires_at: expiresAt,
         };
 
+        // INSERT 전 localStorage 백업
+        try {
+          const pending = JSON.parse(localStorage.getItem('je_pending_orders') || '[]');
+          pending.push(orderPayload);
+          localStorage.setItem('je_pending_orders', JSON.stringify(pending));
+        } catch { /* quota 무시 */ }
+
         let saved = false;
         for (let retry = 0; retry < 3; retry++) {
           const { error: insertError } = await supabase.from(TABLES.ORDERS).insert(orderPayload);
@@ -99,13 +107,34 @@ function CheckoutContent() {
           console.error(`주문 저장 실패 (시도 ${retry + 1}/3):`, insertError);
           if (retry < 2) await new Promise(r => setTimeout(r, 1000));
         }
-        if (!saved) insertFailed = true;
+
+        if (saved) {
+          // 성공 시 pending에서 제거
+          try {
+            const pending = JSON.parse(localStorage.getItem('je_pending_orders') || '[]');
+            const filtered = pending.filter((p: any) => p.order_number !== orderPayload.order_number);
+            if (filtered.length > 0) localStorage.setItem('je_pending_orders', JSON.stringify(filtered));
+            else localStorage.removeItem('je_pending_orders');
+          } catch { /* 무시 */ }
+        } else {
+          insertFailed = true;
+          failedPayloads.push(orderPayload);
+        }
+      }
+
+      // 3회 재시도 모두 실패한 주문은 je_failed_order로 최종 저장
+      if (failedPayloads.length > 0) {
+        try {
+          const existing = JSON.parse(localStorage.getItem('je_failed_order') || '[]');
+          localStorage.setItem('je_failed_order', JSON.stringify([...existing, ...failedPayloads]));
+          localStorage.removeItem('je_pending_orders');
+        } catch { /* 무시 */ }
       }
 
       clearCart();
       await refresh();
       if (insertFailed) {
-        showToast('결제는 완료되었으나 주문 기록 저장에 문제가 발생했습니다. 관리자에게 문의해주세요.', 'error');
+        showToast('결제는 완료되었으나 주문 기록 저장에 문제가 발생했습니다. 다음 접속 시 자동 복구를 시도합니다.', 'error');
       } else {
         showToast('결제가 완료되었습니다!', 'success');
       }

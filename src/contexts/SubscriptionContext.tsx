@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { checkSubscription, checkFreeTrial, isExpiringSoon } from '../utils/subscription';
+import { supabase, TABLES } from '../lib/supabase';
 
 const ACCESS_KEY = 'je_coupon_access';
 
@@ -70,6 +71,28 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
+
+    // 실패한 주문 자동 복구
+    try {
+      const raw = localStorage.getItem('je_failed_order');
+      if (raw && supabase) {
+        const failed: any[] = JSON.parse(raw);
+        const stillFailed: any[] = [];
+        for (const payload of failed) {
+          const { error } = await supabase.from(TABLES.ORDERS).insert(payload);
+          if (error) {
+            stillFailed.push(payload);
+          }
+        }
+        if (stillFailed.length > 0) {
+          localStorage.setItem('je_failed_order', JSON.stringify(stillFailed));
+        } else {
+          localStorage.removeItem('je_failed_order');
+          localStorage.removeItem('je_pending_orders');
+          console.info('미저장 주문이 자동 복구되었습니다.');
+        }
+      }
+    } catch { /* 복구 실패 시 다음 로드에서 재시도 */ }
 
     setLoading(true);
     try {
