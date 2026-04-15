@@ -340,6 +340,64 @@
   box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
 }
 
+/* Order Table - fixed layout */
+.admin-order-table {
+  table-layout: fixed;
+}
+
+.admin-order-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-user-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal !important;
+}
+
+.order-user-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-user-email {
+  font-size: 11px;
+  color: var(--text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-plan-cell {
+  font-size: 13px;
+}
+
+.order-amount-cell {
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
+}
+
+.order-date-cell {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.order-date-cell.expired {
+  color: #DC2626;
+}
+
+.order-date-cell.active {
+  color: #059669;
+}
+
 .admin-order-row.expanded td {
   background: rgba(27, 58, 107, 0.03);
 }
@@ -350,23 +408,37 @@
   border-top: 1px solid var(--border-light);
 }
 
-.admin-order-detail-info dl {
+.admin-order-detail-grid {
   display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 6px 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
   margin-bottom: 16px;
 }
 
-.admin-order-detail-info dt {
+.admin-order-detail-item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.admin-order-detail-item.wide {
+  grid-column: 1 / -1;
+}
+
+.admin-order-detail-item dt {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-light);
+  white-space: nowrap;
+  min-width: 60px;
 }
 
-.admin-order-detail-info dd {
+.admin-order-detail-item dd {
   font-size: 13px;
   color: var(--text-primary);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-order-actions {
