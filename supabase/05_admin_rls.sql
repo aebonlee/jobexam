@@ -133,10 +133,16 @@ CREATE POLICY "jobexam_coupon_redemptions_insert"
 
 -- ============================================================
 -- ■ 8. jobexam_exam_sessions 관리자 bypass 추가
+--    schema.sql 실행 후에만 동작 (테이블 미존재 시 skip)
 -- ============================================================
-DROP POLICY IF EXISTS "sessions_select" ON jobexam_exam_sessions;
-DROP POLICY IF EXISTS "jobexam_exam_sessions_select" ON jobexam_exam_sessions;
-
-CREATE POLICY "sessions_select"
-  ON jobexam_exam_sessions FOR SELECT
-  USING (user_id = auth.uid() OR is_jobexam_admin());
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'jobexam_exam_sessions') THEN
+    EXECUTE 'DROP POLICY IF EXISTS "sessions_select" ON jobexam_exam_sessions';
+    EXECUTE 'DROP POLICY IF EXISTS "jobexam_exam_sessions_select" ON jobexam_exam_sessions';
+    EXECUTE 'CREATE POLICY "sessions_select" ON jobexam_exam_sessions FOR SELECT USING (user_id = auth.uid() OR is_jobexam_admin())';
+    RAISE NOTICE 'jobexam_exam_sessions 관리자 bypass 정책 적용 완료';
+  ELSE
+    RAISE NOTICE 'jobexam_exam_sessions 테이블 미존재 — schema.sql을 먼저 실행하세요';
+  END IF;
+END $$;
