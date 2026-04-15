@@ -713,7 +713,7 @@ export default function AdminDashboard() {
             {filteredMembers.length === 0 ? (
               <p className="admin-empty">검색 결과가 없습니다.</p>
             ) : (
-              <div className="admin-table-wrap" style={{ maxHeight: selectedMember ? '320px' : '600px', overflowY: 'auto' }}>
+              <div className="admin-table-wrap" style={{ maxHeight: '600px', overflowY: 'auto' }}>
                 <table className="admin-table admin-progress-table">
                   <thead>
                     <tr>
@@ -728,7 +728,6 @@ export default function AdminDashboard() {
                   <tbody>
                     {filteredMembers.map(member => {
                       const email = member.email;
-                      const isSelected = selectedMember?.email === email;
                       const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
                       const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
                       const latestPaid = paidOrders[0];
@@ -749,14 +748,9 @@ export default function AdminDashboard() {
                         : (userOrders.length > 0 ? '만료' : '미결제');
 
                       return (
-                        <tr
-                          key={email}
-                          className={isSelected ? 'selected' : ''}
-                          onClick={() => handleSelectMember(member)}
-                          style={{ cursor: 'pointer' }}
-                        >
+                        <tr key={email}>
                           <td>
-                            <span className="admin-member-name">{member.name || '-'}</span>
+                            <span className="admin-member-name" onClick={() => handleSelectMember(member)}>{member.name || '-'}</span>
                           </td>
                           <td>{email}</td>
                           <td>{member.phone || '-'}</td>
@@ -773,162 +767,170 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* 선택된 회원 대시보드 */}
+            {/* 회원 학습현황 모달 */}
             {selectedMember && (
-              <div className="admin-member-dashboard">
-                <h3>
-                  <i className="fa-solid fa-user" /> {selectedMember.name || selectedMember.email} 학습 현황
-                </h3>
-
-                {progressLoading ? (
-                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                    <div className="loading-spinner" />
+              <div className="admin-modal-overlay" onClick={() => setSelectedMember(null)}>
+                <div className="admin-modal" onClick={e => e.stopPropagation()}>
+                  <div className="admin-modal-header">
+                    <h3>
+                      <i className="fa-solid fa-user" /> {selectedMember.name || selectedMember.email} 학습 현황
+                    </h3>
+                    <button className="admin-modal-close" onClick={() => setSelectedMember(null)}>
+                      <i className="fa-solid fa-xmark" />
+                    </button>
                   </div>
-                ) : (
-                  <>
-                    {/* 필기 통계 */}
-                    <div className="dashboard-stats-grid">
-                      <div className="stat-card">
-                        <div className="stat-label">필기 시험수</div>
-                        <span className="stat-number">{pilgiStats.total}</span>
+                  <div className="admin-modal-body">
+                    {progressLoading ? (
+                      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                        <div className="loading-spinner" />
                       </div>
-                      <div className="stat-card">
-                        <div className="stat-label">필기 평균</div>
-                        <span className="stat-number">{pilgiStats.avg}점</span>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">필기 합격률</div>
-                        <span className="stat-number">{pilgiStats.passRate}%</span>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">필기 합격</div>
-                        <span className="stat-number">{pilgiStats.passCount}회</span>
-                      </div>
-                    </div>
-
-                    {/* 실기 통계 */}
-                    <div className="dashboard-stats-grid" style={{ marginTop: '16px' }}>
-                      <div className="stat-card">
-                        <div className="stat-label">실기 연습수</div>
-                        <span className="stat-number">{silgiStats.total}</span>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">실기 평균</div>
-                        <span className="stat-number">{silgiStats.avg}점</span>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">실기 합격률</div>
-                        <span className="stat-number">{silgiStats.passRate}%</span>
-                      </div>
-                      <div className="stat-card">
-                        <div className="stat-label">실기 합격</div>
-                        <span className="stat-number">{silgiStats.passCount}회</span>
-                      </div>
-                    </div>
-
-                    {pilgiStats.total === 0 && silgiStats.total === 0 ? (
-                      <p className="admin-empty">해당 회원의 학습 기록이 없습니다.</p>
                     ) : (
                       <>
-                        {/* 차트 영역 */}
-                        <div className="dashboard-charts" style={{ marginTop: '24px' }}>
-                          {pilgiStats.total > 0 && (
-                            <div className="dashboard-card">
-                              <h4>과목별 평균 점수</h4>
-                              <RadarChart scores={memberAvgScores} />
-                            </div>
-                          )}
-                          {pilgiStats.total > 0 && (
-                            <div className="dashboard-card">
-                              <h4>필기 점수 추이</h4>
-                              <BarChart sessions={[...memberPilgi].reverse()} />
-                            </div>
-                          )}
+                        {/* 필기 통계 */}
+                        <div className="dashboard-stats-grid">
+                          <div className="stat-card">
+                            <div className="stat-label">필기 시험수</div>
+                            <span className="stat-number">{pilgiStats.total}</span>
+                          </div>
+                          <div className="stat-card">
+                            <div className="stat-label">필기 평균</div>
+                            <span className="stat-number">{pilgiStats.avg}점</span>
+                          </div>
+                          <div className="stat-card">
+                            <div className="stat-label">필기 합격률</div>
+                            <span className="stat-number">{pilgiStats.passRate}%</span>
+                          </div>
+                          <div className="stat-card">
+                            <div className="stat-label">필기 합격</div>
+                            <span className="stat-number">{pilgiStats.passCount}회</span>
+                          </div>
                         </div>
 
-                        {/* 약점 과목 */}
-                        {weakSubjects.length > 0 && (
-                          <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                            <h4><i className="fa-solid fa-triangle-exclamation" style={{ color: '#F59E0B' }} /> 약점 과목</h4>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-                              {weakSubjects.map(s => (
-                                <span key={s.code} className="table-badge fail">
-                                  {s.name} ({memberAvgScores[s.code]}점)
-                                </span>
-                              ))}
-                            </div>
+                        {/* 실기 통계 */}
+                        <div className="dashboard-stats-grid" style={{ marginTop: '16px' }}>
+                          <div className="stat-card">
+                            <div className="stat-label">실기 연습수</div>
+                            <span className="stat-number">{silgiStats.total}</span>
                           </div>
-                        )}
+                          <div className="stat-card">
+                            <div className="stat-label">실기 평균</div>
+                            <span className="stat-number">{silgiStats.avg}점</span>
+                          </div>
+                          <div className="stat-card">
+                            <div className="stat-label">실기 합격률</div>
+                            <span className="stat-number">{silgiStats.passRate}%</span>
+                          </div>
+                          <div className="stat-card">
+                            <div className="stat-label">실기 합격</div>
+                            <span className="stat-number">{silgiStats.passCount}회</span>
+                          </div>
+                        </div>
 
-                        {/* 최근 필기 시험 */}
-                        {memberPilgi.length > 0 && (
-                          <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                            <h4>최근 필기 시험</h4>
-                            <div className="admin-table-wrap">
-                              <table className="admin-table">
-                                <thead>
-                                  <tr>
-                                    <th>회차</th>
-                                    <th>점수</th>
-                                    <th>합격여부</th>
-                                    <th>응시일</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {memberPilgi.slice(0, 10).map((s: any, i: number) => (
-                                    <tr key={s.id}>
-                                      <td>{memberPilgi.length - i}회</td>
-                                      <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
-                                      <td>
-                                        <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
-                                          {s.is_pass ? '합격' : '불합격'}
-                                        </span>
-                                      </td>
-                                      <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                        {pilgiStats.total === 0 && silgiStats.total === 0 ? (
+                          <p className="admin-empty">해당 회원의 학습 기록이 없습니다.</p>
+                        ) : (
+                          <>
+                            {/* 차트 영역 */}
+                            <div className="dashboard-charts" style={{ marginTop: '24px' }}>
+                              {pilgiStats.total > 0 && (
+                                <div className="dashboard-card">
+                                  <h4>과목별 평균 점수</h4>
+                                  <RadarChart scores={memberAvgScores} />
+                                </div>
+                              )}
+                              {pilgiStats.total > 0 && (
+                                <div className="dashboard-card">
+                                  <h4>필기 점수 추이</h4>
+                                  <BarChart sessions={[...memberPilgi].reverse()} />
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        )}
 
-                        {/* 최근 실기 연습 */}
-                        {memberSilgi.length > 0 && (
-                          <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                            <h4>최근 실기 연습</h4>
-                            <div className="admin-table-wrap">
-                              <table className="admin-table">
-                                <thead>
-                                  <tr>
-                                    <th>회차</th>
-                                    <th>점수</th>
-                                    <th>합격여부</th>
-                                    <th>연습일</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {memberSilgi.slice(0, 10).map((s: any, i: number) => (
-                                    <tr key={s.id}>
-                                      <td>{memberSilgi.length - i}회</td>
-                                      <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
-                                      <td>
-                                        <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
-                                          {s.is_pass ? '합격' : '불합격'}
-                                        </span>
-                                      </td>
-                                      <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
-                                    </tr>
+                            {/* 약점 과목 */}
+                            {weakSubjects.length > 0 && (
+                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                <h4><i className="fa-solid fa-triangle-exclamation" style={{ color: '#F59E0B' }} /> 약점 과목</h4>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                  {weakSubjects.map(s => (
+                                    <span key={s.code} className="table-badge fail">
+                                      {s.name} ({memberAvgScores[s.code]}점)
+                                    </span>
                                   ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 최근 필기 시험 */}
+                            {memberPilgi.length > 0 && (
+                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                <h4>최근 필기 시험</h4>
+                                <div className="admin-table-wrap">
+                                  <table className="admin-table">
+                                    <thead>
+                                      <tr>
+                                        <th>회차</th>
+                                        <th>점수</th>
+                                        <th>합격여부</th>
+                                        <th>응시일</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {memberPilgi.slice(0, 10).map((s: any, i: number) => (
+                                        <tr key={s.id}>
+                                          <td>{memberPilgi.length - i}회</td>
+                                          <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
+                                          <td>
+                                            <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
+                                              {s.is_pass ? '합격' : '불합격'}
+                                            </span>
+                                          </td>
+                                          <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 최근 실기 연습 */}
+                            {memberSilgi.length > 0 && (
+                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                <h4>최근 실기 연습</h4>
+                                <div className="admin-table-wrap">
+                                  <table className="admin-table">
+                                    <thead>
+                                      <tr>
+                                        <th>회차</th>
+                                        <th>점수</th>
+                                        <th>합격여부</th>
+                                        <th>연습일</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {memberSilgi.slice(0, 10).map((s: any, i: number) => (
+                                        <tr key={s.id}>
+                                          <td>{memberSilgi.length - i}회</td>
+                                          <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
+                                          <td>
+                                            <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
+                                              {s.is_pass ? '합격' : '불합격'}
+                                            </span>
+                                          </td>
+                                          <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
-                  </>
-                )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
