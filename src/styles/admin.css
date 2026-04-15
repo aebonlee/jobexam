@@ -247,6 +247,231 @@
   margin-top: 10px;
 }
 
+/* ===== Order Management ===== */
+.admin-order-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.admin-order-summary-card {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(27, 58, 107, 0.04);
+  border: 1px solid var(--border-light);
+}
+
+.admin-order-summary-card.paid {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.admin-order-summary-card.cancelled {
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.admin-order-summary-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 4px;
+}
+
+.admin-order-summary-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.admin-order-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-order-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-order-filter-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-order-filter-btn:hover {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.admin-order-filter-btn.active {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: #fff;
+}
+
+.admin-order-search {
+  padding: 8px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  width: 260px;
+  background: var(--bg-white);
+  color: var(--text-primary);
+}
+
+.admin-order-search:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
+}
+
+.admin-order-row.expanded td {
+  background: rgba(27, 58, 107, 0.03);
+}
+
+.admin-order-detail {
+  padding: 20px 24px;
+  background: rgba(27, 58, 107, 0.02);
+  border-top: 1px solid var(--border-light);
+}
+
+.admin-order-detail-info dl {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 6px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-order-detail-info dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.admin-order-detail-info dd {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.admin-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-order-actions .btn-sm.active {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.admin-order-cancel-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ===== Member Progress (학습현황) ===== */
+.admin-member-search {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--bg-white);
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.admin-member-search:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(27, 58, 107, 0.1);
+}
+
+.admin-member-list {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.admin-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-member-item:last-child {
+  border-bottom: none;
+}
+
+.admin-member-item:hover {
+  background: rgba(27, 58, 107, 0.04);
+}
+
+.admin-member-item.active {
+  background: rgba(27, 58, 107, 0.08);
+  border-left: 3px solid var(--primary-blue);
+}
+
+.admin-member-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-member-item-info strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.admin-member-item-info span {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.admin-member-dashboard {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border-light);
+}
+
+.admin-member-dashboard h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ===== Coupon Redeem Page ===== */
 .coupon-redeem {
   max-width: 520px;
