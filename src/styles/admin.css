@@ -5,7 +5,8 @@
 /* ===== Admin Layout (Sidebar + Main) ===== */
 .admin-layout {
   display: flex;
-  min-height: calc(100vh - var(--nav-height, 72px));
+  min-height: calc(100vh - var(--nav-height, 84px));
+  padding-top: var(--nav-height, 84px);
 }
 
 /* Sidebar */
