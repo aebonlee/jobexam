@@ -2,9 +2,264 @@
    JobPath - Admin Dashboard & Coupon Styles
    ============================================ */
 
-/* ===== Admin Dashboard ===== */
-.admin-dashboard {
-  padding-bottom: 80px;
+/* ===== Admin Layout (Sidebar + Main) ===== */
+.admin-layout {
+  display: flex;
+  min-height: calc(100vh - var(--nav-height, 72px));
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 260px;
+  background: var(--bg-white);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: var(--nav-height, 72px);
+  height: calc(100vh - var(--nav-height, 72px));
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.admin-sidebar-header {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.admin-sidebar-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-sidebar-header p {
+  font-size: 13px;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.admin-sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  overflow-y: auto;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  text-align: left;
+}
+
+.admin-nav-item i {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.admin-nav-item:hover {
+  background: rgba(27, 58, 107, 0.06);
+  color: var(--primary-blue);
+}
+
+.admin-nav-item.active {
+  background: rgba(27, 58, 107, 0.1);
+  color: var(--primary-blue);
+}
+
+.admin-nav-badge {
+  margin-left: auto;
+  background: rgba(27, 58, 107, 0.08);
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.admin-nav-item.active .admin-nav-badge {
+  background: rgba(27, 58, 107, 0.15);
+  color: var(--primary-blue);
+}
+
+.admin-sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.admin-sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.admin-sidebar-footer a:hover {
+  color: var(--primary-blue);
+}
+
+/* Main Content */
+.admin-main {
+  flex: 1;
+  padding: 32px;
+  min-width: 0;
+}
+
+.admin-page-header {
+  margin-bottom: 28px;
+}
+
+.admin-page-header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-page-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Mobile Hamburger Toggle */
+.admin-mobile-toggle {
+  display: none;
+  position: fixed;
+  top: calc(var(--nav-height, 72px) + 12px);
+  left: 12px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  font-size: 18px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Mobile Sidebar Overlay */
+.admin-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+/* Sortable Table Headers */
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.sortable-th:hover {
+  color: var(--primary-blue);
+}
+
+.sort-icon {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.sort-icon.active {
+  opacity: 1;
+  color: var(--primary-blue);
+}
+
+/* Pagination */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border-light);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-pagination-info {
+  font-size: 13px;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.admin-pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-pagination-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 36px;
+  text-align: center;
+}
+
+.admin-pagination-btn:hover:not(:disabled) {
+  border-color: var(--primary-blue);
+  color: var(--primary-blue);
+}
+
+.admin-pagination-btn.active {
+  background: var(--primary-blue);
+  border-color: var(--primary-blue);
+  color: #fff;
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-pagination-ellipsis {
+  padding: 6px 4px;
+  font-size: 13px;
+  color: var(--text-light);
 }
 
 /* Stats Grid */
@@ -52,39 +307,6 @@
   font-size: 13px;
   color: var(--text-secondary);
   margin-top: 4px;
-}
-
-/* Tabs */
-.admin-tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 2px solid var(--border-light);
-  margin-bottom: 24px;
-}
-
-.admin-tab {
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.admin-tab:hover {
-  color: var(--primary-blue);
-}
-
-.admin-tab.active {
-  color: var(--primary-blue);
-  border-bottom-color: var(--primary-blue);
 }
 
 /* Panel */

@@ -34,24 +34,6 @@ html[data-theme="dark"] .nav-link { color: var(--text-secondary); }
 html[data-theme="dark"] .nav-link:hover,
 html[data-theme="dark"] .nav-link.active { color: var(--primary-blue-light); }
 html[data-theme="dark"] .nav-link::after { background: var(--primary-blue-light); }
-/* About variant dark */
-html[data-theme="dark"] .nav-variant-about > .nav-link { color: #5EEAD4; }
-html[data-theme="dark"] .nav-variant-about > .nav-link:hover,
-html[data-theme="dark"] .nav-variant-about > .nav-link.active { color: #2DD4BF; }
-html[data-theme="dark"] .nav-variant-about > .nav-link::after { background: #2DD4BF; }
-html[data-theme="dark"] .nav-dropdown-about { border-top-color: #2DD4BF; }
-html[data-theme="dark"] .nav-dropdown-about .nav-dropdown-link i { color: #2DD4BF; }
-html[data-theme="dark"] .nav-dropdown-about .nav-dropdown-link:hover { background: rgba(45, 212, 191, 0.08); color: #5EEAD4; }
-/* Service variant dark */
-html[data-theme="dark"] .nav-variant-service > .nav-link { color: #FCD34D; }
-html[data-theme="dark"] .nav-variant-service > .nav-link:hover,
-html[data-theme="dark"] .nav-variant-service > .nav-link.active { color: #FBBF24; }
-html[data-theme="dark"] .nav-variant-service > .nav-link::after { background: #FBBF24; }
-html[data-theme="dark"] .nav-dropdown-service { border-top-color: #FBBF24; }
-html[data-theme="dark"] .nav-dropdown-service .nav-dropdown-link i { color: #FBBF24; }
-html[data-theme="dark"] .nav-dropdown-service .nav-dropdown-link:hover { background: rgba(251, 191, 36, 0.08); color: #FCD34D; }
-html[data-theme="dark"] .nav-variant-about::after,
-html[data-theme="dark"] .nav-variant-service::before { background: var(--border-light); }
 html[data-theme="dark"] .login-link {
     background: var(--primary-blue-light);
     color: #FFFFFF;
@@ -1901,18 +1883,71 @@ html[data-theme="dark"] .admin-stat-value {
 html[data-theme="dark"] .admin-stat-label {
     color: var(--text-secondary);
 }
-html[data-theme="dark"] .admin-tabs {
+html[data-theme="dark"] .admin-sidebar {
+    background: var(--bg-white);
+    border-right-color: var(--border-light);
+}
+html[data-theme="dark"] .admin-sidebar-header {
     border-bottom-color: var(--border-light);
 }
-html[data-theme="dark"] .admin-tab {
+html[data-theme="dark"] .admin-sidebar-header h2 {
+    color: #F1F5F9;
+}
+html[data-theme="dark"] .admin-sidebar-footer {
+    border-top-color: var(--border-light);
+}
+html[data-theme="dark"] .admin-sidebar-footer a {
+    color: var(--text-light);
+}
+html[data-theme="dark"] .admin-nav-item {
     color: var(--text-secondary);
 }
-html[data-theme="dark"] .admin-tab:hover {
+html[data-theme="dark"] .admin-nav-item:hover {
+    background: var(--bg-light-gray);
     color: var(--primary-blue-light);
 }
-html[data-theme="dark"] .admin-tab.active {
+html[data-theme="dark"] .admin-nav-item.active {
+    background: rgba(61, 109, 181, 0.15);
     color: var(--primary-blue-light);
-    border-bottom-color: var(--primary-blue-light);
+}
+html[data-theme="dark"] .admin-nav-badge {
+    background: var(--bg-light-gray);
+    color: var(--text-light);
+}
+html[data-theme="dark"] .admin-nav-item.active .admin-nav-badge {
+    background: rgba(61, 109, 181, 0.2);
+    color: var(--primary-blue-light);
+}
+html[data-theme="dark"] .admin-page-header h1 {
+    color: #F1F5F9;
+}
+html[data-theme="dark"] .admin-mobile-toggle {
+    background: var(--bg-white);
+    border-color: var(--border-light);
+    color: var(--text-primary);
+}
+html[data-theme="dark"] .admin-pagination {
+    border-top-color: var(--border-light);
+}
+html[data-theme="dark"] .admin-pagination-btn {
+    background: var(--bg-white);
+    border-color: var(--border-light);
+    color: var(--text-secondary);
+}
+html[data-theme="dark"] .admin-pagination-btn:hover:not(:disabled) {
+    border-color: var(--primary-blue-light);
+    color: var(--primary-blue-light);
+}
+html[data-theme="dark"] .admin-pagination-btn.active {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: #fff;
+}
+html[data-theme="dark"] .sortable-th:hover {
+    color: var(--primary-blue-light);
+}
+html[data-theme="dark"] .sort-icon.active {
+    color: var(--primary-blue-light);
 }
 html[data-theme="dark"] .admin-panel {
     background: var(--bg-white);

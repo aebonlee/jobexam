@@ -19,6 +19,57 @@ function generateCouponCode(): string {
 
 type Tab = 'members' | 'orders' | 'coupons' | 'progress';
 
+const ITEMS_PER_PAGE = 20;
+
+const TAB_CONFIG: { key: Tab; icon: string; label: string; desc: string }[] = [
+  { key: 'members', icon: 'fa-solid fa-users', label: '회원 관리', desc: '등록된 회원 목록을 확인하세요' },
+  { key: 'orders', icon: 'fa-solid fa-receipt', label: '주문 관리', desc: '결제 내역과 주문 상태를 관리하세요' },
+  { key: 'coupons', icon: 'fa-solid fa-ticket', label: '쿠폰 관리', desc: '쿠폰 발행 및 상태를 관리하세요' },
+  { key: 'progress', icon: 'fa-solid fa-chart-line', label: '학습 현황', desc: '회원별 학습 데이터를 확인하세요' },
+];
+
+/* ── Sort helper ────────────────────────── */
+function SortIcon({ col, config }: { col: string; config: { key: string; dir: 'asc' | 'desc' } }) {
+  if (config.key !== col) return <span className="sort-icon">▲</span>;
+  return <span className="sort-icon active">{config.dir === 'asc' ? '▲' : '▼'}</span>;
+}
+
+/* ── Pagination bar ─────────────────────── */
+function PaginationBar({ total, page, setPage }: { total: number; page: number; setPage: (p: number) => void }) {
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  if (totalPages <= 1) return null;
+
+  const pages: (number | '...')[] = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+
+  return (
+    <div className="admin-pagination">
+      <span className="admin-pagination-info">
+        총 {total}건 · {page} / {totalPages} 페이지
+      </span>
+      <div className="admin-pagination-buttons">
+        <button className="admin-pagination-btn" disabled={page === 1} onClick={() => setPage(page - 1)}>이전</button>
+        {pages.map((p, i) =>
+          p === '...' ? (
+            <span key={`e${i}`} className="admin-pagination-ellipsis">…</span>
+          ) : (
+            <button key={p} className={`admin-pagination-btn ${page === p ? 'active' : ''}`} onClick={() => setPage(p as number)}>
+              {p}
+            </button>
+          ),
+        )}
+        <button className="admin-pagination-btn" disabled={page === totalPages} onClick={() => setPage(page + 1)}>다음</button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('members');
@@ -35,6 +86,18 @@ export default function AdminDashboard() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [cancelMemo, setCancelMemo] = useState('');
   const [updatingOrder, setUpdatingOrder] = useState(false);
+
+  // Sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Pagination & Sort
+  const [currentPage, setCurrentPage] = useState<Record<Tab, number>>({ members: 1, orders: 1, coupons: 1, progress: 1 });
+  const [sortConfig, setSortConfig] = useState<Record<Tab, { key: string; dir: 'asc' | 'desc' }>>({
+    members: { key: '', dir: 'asc' },
+    orders: { key: '', dir: 'asc' },
+    coupons: { key: '', dir: 'asc' },
+    progress: { key: '', dir: 'asc' },
+  });
 
   // 회원 학습현황 state
   const [progressSearch, setProgressSearch] = useState('');
@@ -70,14 +133,12 @@ export default function AdminDashboard() {
     // 회원 목록: 프로필 기반 + 주문/쿠폰 데이터 보강
     const emailMap: Record<string, { email: string; name: string; phone: string; firstSeen: string; lastActivity: string; source: string }> = {};
 
-    // 프로필에서 시작 (모든 가입자)
     (profilesRes.data || []).forEach((p: any) => {
       const e = (p.email || '').toLowerCase();
       if (!e) return;
       emailMap[e] = { email: e, name: p.name || '', phone: '', firstSeen: p.created_at, lastActivity: p.created_at, source: '가입' };
     });
 
-    // 주문에서 보강 (전화번호, 이름, 마지막활동일)
     (ordersRes.data || []).forEach((o: any) => {
       const e = (o.user_email || '').toLowerCase();
       if (!e) return;
@@ -90,7 +151,6 @@ export default function AdminDashboard() {
       }
     });
 
-    // 쿠폰 사용에서 보강
     (redemptionsRes.data || []).forEach((r: any) => {
       const e = (r.user_email || '').toLowerCase();
       if (!e) return;
@@ -110,6 +170,48 @@ export default function AdminDashboard() {
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + (o.total_amount || 0), 0);
   const activeCoupons = coupons.filter(c => c.is_active && c.used_count < c.max_uses).length;
+
+  // ── Sort / Pagination helpers ──
+  const handleSort = (tab: Tab, key: string) => {
+    setSortConfig(prev => {
+      const cur = prev[tab];
+      const dir = cur.key === key && cur.dir === 'asc' ? 'desc' : 'asc';
+      return { ...prev, [tab]: { key, dir } };
+    });
+    setCurrentPage(prev => ({ ...prev, [tab]: 1 }));
+  };
+
+  const sortItems = <T,>(items: T[], tab: Tab): T[] => {
+    const { key, dir } = sortConfig[tab];
+    if (!key) return items;
+    return [...items].sort((a: any, b: any) => {
+      let va = a[key] ?? '';
+      let vb = b[key] ?? '';
+      if (typeof va === 'string' && !isNaN(Date.parse(va)) && va.includes('-')) {
+        va = new Date(va).getTime();
+        vb = new Date(vb).getTime();
+      } else if (typeof va === 'number') {
+        // keep as-is
+      } else {
+        va = String(va).toLowerCase();
+        vb = String(vb).toLowerCase();
+      }
+      if (va < vb) return dir === 'asc' ? -1 : 1;
+      if (va > vb) return dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
+
+  const paginate = <T,>(items: T[], tab: Tab): T[] => {
+    const page = currentPage[tab];
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return items.slice(start, start + ITEMS_PER_PAGE);
+  };
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+  };
 
   // Generate coupons
   const handleGenerateCoupons = async () => {
@@ -212,6 +314,11 @@ export default function AdminDashboard() {
     return list;
   }, [orders, orderFilter, orderSearch]);
 
+  // Reset page when filter/search changes
+  useEffect(() => {
+    setCurrentPage(prev => ({ ...prev, orders: 1 }));
+  }, [orderFilter, orderSearch]);
+
   // PDF 다운로드
   const handleDownloadPDF = useCallback(async () => {
     if (!modalBodyRef.current || !selectedMember) return;
@@ -231,7 +338,6 @@ export default function AdminDashboard() {
       const contentWidth = pageWidth - margin * 2;
       const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
-      // 제목 추가
       pdf.setFontSize(14);
       pdf.text(`${selectedMember.name || selectedMember.email} - 학습 현황`, margin, margin + 5);
       pdf.setFontSize(9);
@@ -245,7 +351,6 @@ export default function AdminDashboard() {
       if (imgHeight <= availableHeight) {
         pdf.addImage(imgData, 'PNG', margin, startY, contentWidth, imgHeight);
       } else {
-        // 여러 페이지로 분할
         let remainingHeight = imgHeight;
         let srcY = 0;
         let isFirstPage = true;
@@ -333,7 +438,6 @@ ${content}
     setSelectedMember(member);
     setProgressLoading(true);
     try {
-      // 프로필에서 user_id 조회
       const { data: profile } = await supabase
         .from(TABLES.PROFILES)
         .select('id')
@@ -367,7 +471,6 @@ ${content}
       setMemberPilgi(pilgiData);
       setMemberSilgi(silgiData);
 
-      // 과목별 평균 점수 계산
       const totals: Record<string, number> = {};
       const counts: Record<string, number> = {};
       SUBJECTS.forEach(s => { totals[s.code] = 0; counts[s.code] = 0; });
@@ -391,7 +494,7 @@ ${content}
     setProgressLoading(false);
   };
 
-  // 회원 학습현황: 검색 필터 (이름/이메일/전화번호)
+  // 회원 학습현황: 검색 필터
   const filteredMembers = useMemo(() => {
     if (!progressSearch.trim()) return members;
     const q = progressSearch.toLowerCase();
@@ -448,6 +551,29 @@ ${content}
     '365day': '365일 이용권',
   };
 
+  // ── Sorted & paginated data ──
+  const sortedMembers = useMemo(() => sortItems(members, 'members'), [members, sortConfig.members]);
+  const pagedMembers = useMemo(() => paginate(sortedMembers, 'members'), [sortedMembers, currentPage.members]);
+
+  const sortedOrders = useMemo(() => sortItems(filteredOrders, 'orders'), [filteredOrders, sortConfig.orders]);
+  const pagedOrders = useMemo(() => paginate(sortedOrders, 'orders'), [sortedOrders, currentPage.orders]);
+
+  const sortedCoupons = useMemo(() => sortItems(coupons, 'coupons'), [coupons, sortConfig.coupons]);
+  const pagedCoupons = useMemo(() => paginate(sortedCoupons, 'coupons'), [sortedCoupons, currentPage.coupons]);
+
+  const sortedProgress = useMemo(() => sortItems(filteredMembers, 'progress'), [filteredMembers, sortConfig.progress]);
+  const pagedProgress = useMemo(() => paginate(sortedProgress, 'progress'), [sortedProgress, currentPage.progress]);
+
+  // Badge counts for sidebar
+  const badgeCounts: Record<Tab, number> = {
+    members: members.length,
+    orders: orders.length,
+    coupons: activeCoupons,
+    progress: members.length,
+  };
+
+  const currentTabConfig = TAB_CONFIG.find(t => t.key === activeTab)!;
+
   if (loading) {
     return (
       <div className="loading-page"><div className="loading-spinner" /></div>
@@ -458,645 +584,714 @@ ${content}
     <>
       <SEOHead title="관리자 대시보드" />
 
-      <div className="page-header">
-        <div className="container">
-          <h1><i className="fa-solid fa-shield-halved" /> 관리자 대시보드</h1>
-          <p className="page-desc">회원, 주문, 쿠폰을 관리하세요</p>
-        </div>
-      </div>
+      <div className="admin-layout">
+        {/* Mobile Toggle */}
+        <button className="admin-mobile-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <i className={sidebarOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'} />
+        </button>
 
-      <div className="container admin-dashboard">
-        {/* Stats */}
-        <div className="admin-stats">
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon"><i className="fa-solid fa-users" /></div>
-            <div className="admin-stat-value">{members.length}</div>
-            <div className="admin-stat-label">총 회원수</div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon"><i className="fa-solid fa-receipt" /></div>
-            <div className="admin-stat-value">{orders.length}</div>
-            <div className="admin-stat-label">총 주문수</div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon"><i className="fa-solid fa-won-sign" /></div>
-            <div className="admin-stat-value">{totalRevenue.toLocaleString()}</div>
-            <div className="admin-stat-label">총 매출</div>
-          </div>
-          <div className="admin-stat-card">
-            <div className="admin-stat-icon"><i className="fa-solid fa-ticket" /></div>
-            <div className="admin-stat-value">{activeCoupons}</div>
-            <div className="admin-stat-label">활성 쿠폰</div>
-          </div>
-        </div>
+        {/* Mobile Overlay */}
+        {sidebarOpen && <div className="admin-sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
-        {/* Tabs */}
-        <div className="admin-tabs">
-          <button className={`admin-tab ${activeTab === 'members' ? 'active' : ''}`} onClick={() => setActiveTab('members')}>
-            <i className="fa-solid fa-users" /> 회원 관리
-          </button>
-          <button className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
-            <i className="fa-solid fa-receipt" /> 주문 관리
-          </button>
-          <button className={`admin-tab ${activeTab === 'coupons' ? 'active' : ''}`} onClick={() => setActiveTab('coupons')}>
-            <i className="fa-solid fa-ticket" /> 쿠폰 관리
-          </button>
-          <button className={`admin-tab ${activeTab === 'progress' ? 'active' : ''}`} onClick={() => setActiveTab('progress')}>
-            <i className="fa-solid fa-chart-line" /> 회원 학습현황
-          </button>
-        </div>
-
-        {/* Members Tab */}
-        {activeTab === 'members' && (
-          <div className="admin-panel">
-            <h2>회원 목록 ({members.length}명)</h2>
-            {members.length === 0 ? (
-              <p className="admin-empty">등록된 회원이 없습니다.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>이름</th>
-                      <th>이메일</th>
-                      <th>가입경로</th>
-                      <th>주문수</th>
-                      <th>쿠폰</th>
-                      <th>최초 확인일</th>
-                      <th>이용 상태</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {members.map(member => {
-                      const email = member.email;
-                      const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
-                      const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
-                      const latestPaid = paidOrders[0];
-                      const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
-                      const userRedemptions = redemptions.filter(r => (r.user_email || '').toLowerCase() === email);
-                      let couponActive = false;
-                      if (userRedemptions.length > 0) {
-                        for (const r of userRedemptions) {
-                          const cp = coupons.find(c => c.id === r.coupon_id);
-                          const days = cp?.days || 1;
-                          const exp = new Date(new Date(r.created_at).getTime() + days * 86400000);
-                          if (exp > new Date()) { couponActive = true; break; }
-                        }
-                      }
-                      const isActive = orderActive || couponActive;
-                      return (
-                        <tr key={email}>
-                          <td style={{ fontWeight: 600 }}>{member.name || '-'}</td>
-                          <td>{email}</td>
-                          <td><span className="table-badge">{member.source}</span></td>
-                          <td>{userOrders.length}</td>
-                          <td>{userRedemptions.length}</td>
-                          <td>{new Date(member.firstSeen).toLocaleDateString('ko-KR')}</td>
-                          <td>
-                            <span className={`table-badge ${isActive ? 'pass' : ''}`}>
-                              {isActive ? (couponActive && !orderActive ? '쿠폰 이용중' : '이용중') : '만료/없음'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        {/* Sidebar */}
+        <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
+          <div className="admin-sidebar-header">
+            <h2><i className="fa-solid fa-shield-halved" /> 관리자</h2>
+            <p>관리 패널</p>
           </div>
-        )}
+          <nav className="admin-sidebar-nav">
+            {TAB_CONFIG.map(tab => (
+              <button
+                key={tab.key}
+                className={`admin-nav-item ${activeTab === tab.key ? 'active' : ''}`}
+                onClick={() => handleTabChange(tab.key)}
+              >
+                <i className={tab.icon} />
+                {tab.label}
+                <span className="admin-nav-badge">{badgeCounts[tab.key]}</span>
+              </button>
+            ))}
+          </nav>
+          <div className="admin-sidebar-footer">
+            <a href="/">
+              <i className="fa-solid fa-arrow-left" /> 사이트로 돌아가기
+            </a>
+          </div>
+        </aside>
 
-        {/* Orders Tab */}
-        {activeTab === 'orders' && (
-          <div className="admin-panel">
-            {/* 주문 요약 */}
-            <div className="admin-order-summary">
-              <div className="admin-order-summary-card">
-                <span className="admin-order-summary-label">전체 주문</span>
-                <span className="admin-order-summary-value">{orderSummary.total}건</span>
-              </div>
-              <div className="admin-order-summary-card paid">
-                <span className="admin-order-summary-label">결제완료</span>
-                <span className="admin-order-summary-value">{orderSummary.paidCount}건 / {orderSummary.paidAmount.toLocaleString()}원</span>
-              </div>
-              <div className="admin-order-summary-card cancelled">
-                <span className="admin-order-summary-label">취소/환불</span>
-                <span className="admin-order-summary-value">{orderSummary.cancelledCount + orderSummary.refundedCount}건</span>
-              </div>
+        {/* Main Content */}
+        <main className="admin-main">
+          <div className="admin-page-header">
+            <h1><i className={currentTabConfig.icon} /> {currentTabConfig.label}</h1>
+            <p>{currentTabConfig.desc}</p>
+          </div>
+
+          {/* Stats */}
+          <div className="admin-stats">
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon"><i className="fa-solid fa-users" /></div>
+              <div className="admin-stat-value">{members.length}</div>
+              <div className="admin-stat-label">총 회원수</div>
             </div>
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon"><i className="fa-solid fa-receipt" /></div>
+              <div className="admin-stat-value">{orders.length}</div>
+              <div className="admin-stat-label">총 주문수</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon"><i className="fa-solid fa-won-sign" /></div>
+              <div className="admin-stat-value">{totalRevenue.toLocaleString()}</div>
+              <div className="admin-stat-label">총 매출</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon"><i className="fa-solid fa-ticket" /></div>
+              <div className="admin-stat-value">{activeCoupons}</div>
+              <div className="admin-stat-label">활성 쿠폰</div>
+            </div>
+          </div>
 
-            {/* 필터 + 검색 */}
-            <div className="admin-order-toolbar">
-              <div className="admin-order-filters">
-                {['all', 'paid', 'pending', 'cancelled', 'refunded', 'failed'].map(f => {
-                  const count = f === 'all' ? orders.length : orders.filter(o => (o.payment_status || 'pending') === f).length;
-                  if (f !== 'all' && count === 0) return null;
-                  const label = f === 'all' ? '전체' : (STATUS_LABELS[f]?.text || f);
-                  return (
-                    <button key={f} className={`admin-order-filter-btn ${orderFilter === f ? 'active' : ''}`} onClick={() => setOrderFilter(f)}>
-                      {label} ({count})
-                    </button>
-                  );
-                })}
+          {/* ═══════ Members Tab ═══════ */}
+          {activeTab === 'members' && (
+            <div className="admin-panel">
+              <h2>회원 목록 ({members.length}명)</h2>
+              {members.length === 0 ? (
+                <p className="admin-empty">등록된 회원이 없습니다.</p>
+              ) : (
+                <>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th className="sortable-th" onClick={() => handleSort('members', 'name')}>
+                            이름 <SortIcon col="name" config={sortConfig.members} />
+                          </th>
+                          <th className="sortable-th" onClick={() => handleSort('members', 'email')}>
+                            이메일 <SortIcon col="email" config={sortConfig.members} />
+                          </th>
+                          <th>가입경로</th>
+                          <th>주문수</th>
+                          <th>쿠폰</th>
+                          <th className="sortable-th" onClick={() => handleSort('members', 'firstSeen')}>
+                            최초 확인일 <SortIcon col="firstSeen" config={sortConfig.members} />
+                          </th>
+                          <th>이용 상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedMembers.map(member => {
+                          const email = member.email;
+                          const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
+                          const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
+                          const latestPaid = paidOrders[0];
+                          const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
+                          const userRedemptions = redemptions.filter(r => (r.user_email || '').toLowerCase() === email);
+                          let couponActive = false;
+                          if (userRedemptions.length > 0) {
+                            for (const r of userRedemptions) {
+                              const cp = coupons.find(c => c.id === r.coupon_id);
+                              const days = cp?.days || 1;
+                              const exp = new Date(new Date(r.created_at).getTime() + days * 86400000);
+                              if (exp > new Date()) { couponActive = true; break; }
+                            }
+                          }
+                          const isActive = orderActive || couponActive;
+                          return (
+                            <tr key={email}>
+                              <td style={{ fontWeight: 600 }}>{member.name || '-'}</td>
+                              <td>{email}</td>
+                              <td><span className="table-badge">{member.source}</span></td>
+                              <td>{userOrders.length}</td>
+                              <td>{userRedemptions.length}</td>
+                              <td>{new Date(member.firstSeen).toLocaleDateString('ko-KR')}</td>
+                              <td>
+                                <span className={`table-badge ${isActive ? 'pass' : ''}`}>
+                                  {isActive ? (couponActive && !orderActive ? '쿠폰 이용중' : '이용중') : '만료/없음'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationBar
+                    total={sortedMembers.length}
+                    page={currentPage.members}
+                    setPage={p => setCurrentPage(prev => ({ ...prev, members: p }))}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ═══════ Orders Tab ═══════ */}
+          {activeTab === 'orders' && (
+            <div className="admin-panel">
+              {/* 주문 요약 */}
+              <div className="admin-order-summary">
+                <div className="admin-order-summary-card">
+                  <span className="admin-order-summary-label">전체 주문</span>
+                  <span className="admin-order-summary-value">{orderSummary.total}건</span>
+                </div>
+                <div className="admin-order-summary-card paid">
+                  <span className="admin-order-summary-label">결제완료</span>
+                  <span className="admin-order-summary-value">{orderSummary.paidCount}건 / {orderSummary.paidAmount.toLocaleString()}원</span>
+                </div>
+                <div className="admin-order-summary-card cancelled">
+                  <span className="admin-order-summary-label">취소/환불</span>
+                  <span className="admin-order-summary-value">{orderSummary.cancelledCount + orderSummary.refundedCount}건</span>
+                </div>
               </div>
+
+              {/* 필터 + 검색 */}
+              <div className="admin-order-toolbar">
+                <div className="admin-order-filters">
+                  {['all', 'paid', 'pending', 'cancelled', 'refunded', 'failed'].map(f => {
+                    const count = f === 'all' ? orders.length : orders.filter(o => (o.payment_status || 'pending') === f).length;
+                    if (f !== 'all' && count === 0) return null;
+                    const label = f === 'all' ? '전체' : (STATUS_LABELS[f]?.text || f);
+                    return (
+                      <button key={f} className={`admin-order-filter-btn ${orderFilter === f ? 'active' : ''}`} onClick={() => setOrderFilter(f)}>
+                        {label} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  type="text"
+                  className="admin-order-search"
+                  placeholder="주문번호, 이메일, 이름 검색..."
+                  value={orderSearch}
+                  onChange={e => setOrderSearch(e.target.value)}
+                />
+              </div>
+
+              {filteredOrders.length === 0 ? (
+                <p className="admin-empty">해당 조건의 주문이 없습니다.</p>
+              ) : (
+                <>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table admin-order-table">
+                      <colgroup>
+                        <col style={{ width: '13%' }} />
+                        <col style={{ width: '22%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '10%' }} />
+                        <col style={{ width: '14%' }} />
+                        <col style={{ width: '14%' }} />
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th className="sortable-th" onClick={() => handleSort('orders', 'order_number')}>
+                            주문번호 <SortIcon col="order_number" config={sortConfig.orders} />
+                          </th>
+                          <th>주문자</th>
+                          <th>플랜</th>
+                          <th className="sortable-th" onClick={() => handleSort('orders', 'total_amount')}>
+                            금액 <SortIcon col="total_amount" config={sortConfig.orders} />
+                          </th>
+                          <th>상태</th>
+                          <th>만료일</th>
+                          <th className="sortable-th" onClick={() => handleSort('orders', 'created_at')}>
+                            결제일 <SortIcon col="created_at" config={sortConfig.orders} />
+                          </th>
+                        </tr>
+                      </thead>
+                      {pagedOrders.map(order => {
+                        const status = STATUS_LABELS[order.payment_status] || { text: order.payment_status, cls: '' };
+                        const isExpanded = expandedOrder === order.id;
+                        const isExpired = order.expires_at && new Date(order.expires_at) < new Date();
+                        return (
+                          <tbody key={order.id}>
+                            <tr className={`admin-order-row ${isExpanded ? 'expanded' : ''}`} onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{ cursor: 'pointer' }}>
+                              <td className="order-num-cell">{order.order_number}</td>
+                              <td className="order-user-cell">
+                                <span className="order-user-name">{order.user_name || order.user_email?.split('@')[0] || '-'}</span>
+                                <span className="order-user-email">{order.user_email}</span>
+                              </td>
+                              <td className="order-plan-cell">{PLAN_LABELS[order.plan_type] || order.plan_type}</td>
+                              <td className="order-amount-cell">{(order.total_amount || 0).toLocaleString()}원</td>
+                              <td><span className={`table-badge ${status.cls}`}>{status.text}</span></td>
+                              <td>
+                                {order.expires_at ? (
+                                  <span className={`order-date-cell ${isExpired ? 'expired' : 'active'}`}>
+                                    {new Date(order.expires_at).toLocaleDateString('ko-KR')}
+                                    {isExpired ? ' (만료)' : ''}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                              <td className="order-date-cell">{new Date(order.created_at).toLocaleDateString('ko-KR')}</td>
+                            </tr>
+                            {isExpanded && (
+                              <tr>
+                                <td colSpan={7} style={{ padding: 0 }}>
+                                  <div className="admin-order-detail">
+                                    <div className="admin-order-detail-grid">
+                                      <div className="admin-order-detail-item">
+                                        <dt>주문번호</dt><dd>{order.order_number}</dd>
+                                      </div>
+                                      <div className="admin-order-detail-item">
+                                        <dt>이메일</dt><dd>{order.user_email || '-'}</dd>
+                                      </div>
+                                      <div className="admin-order-detail-item">
+                                        <dt>전화번호</dt><dd>{order.user_phone || '-'}</dd>
+                                      </div>
+                                      <div className="admin-order-detail-item">
+                                        <dt>결제수단</dt><dd>{order.payment_method || 'card'}</dd>
+                                      </div>
+                                      {order.portone_payment_id && (
+                                        <div className="admin-order-detail-item wide">
+                                          <dt>결제 ID</dt><dd style={{ fontFamily: 'monospace', fontSize: '12px' }}>{order.portone_payment_id}</dd>
+                                        </div>
+                                      )}
+                                      {order.paid_at && (
+                                        <div className="admin-order-detail-item">
+                                          <dt>결제일시</dt><dd>{new Date(order.paid_at).toLocaleString('ko-KR')}</dd>
+                                        </div>
+                                      )}
+                                      {order.cancelled_at && (
+                                        <div className="admin-order-detail-item">
+                                          <dt>취소일시</dt><dd style={{ color: '#DC2626' }}>{new Date(order.cancelled_at).toLocaleString('ko-KR')}</dd>
+                                        </div>
+                                      )}
+                                      {order.cancel_reason && (
+                                        <div className="admin-order-detail-item wide">
+                                          <dt>취소사유</dt><dd style={{ color: '#DC2626' }}>{order.cancel_reason}</dd>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="admin-order-actions">
+                                      <span style={{ fontSize: '13px', fontWeight: 600 }}>상태 변경:</span>
+                                      {['pending', 'paid', 'cancelled', 'refunded'].map(s => (
+                                        <button
+                                          key={s}
+                                          className={`btn-sm ${order.payment_status === s ? 'active' : ''}`}
+                                          disabled={order.payment_status === s || updatingOrder}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (s === 'cancelled' || s === 'refunded') {
+                                              setCancelMemo('');
+                                            } else {
+                                              handleOrderStatusChange(order.id, s);
+                                            }
+                                          }}
+                                          style={{
+                                            background: order.payment_status === s ? 'var(--primary-blue)' : 'rgba(27,58,107,0.08)',
+                                            color: order.payment_status === s ? '#fff' : 'var(--text-primary)',
+                                            opacity: order.payment_status === s ? 0.6 : 1,
+                                          }}
+                                        >
+                                          {STATUS_LABELS[s]?.text || s}
+                                        </button>
+                                      ))}
+                                    </div>
+                                    {(order.payment_status !== 'cancelled' && order.payment_status !== 'refunded') && (
+                                      <div className="admin-order-cancel-form" onClick={e => e.stopPropagation()}>
+                                        <input
+                                          type="text"
+                                          placeholder="취소/환불 사유를 입력하세요..."
+                                          value={cancelMemo}
+                                          onChange={e => setCancelMemo(e.target.value)}
+                                          style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-light)', borderRadius: '8px', fontSize: '13px' }}
+                                        />
+                                        <button
+                                          className="btn-sm btn-danger"
+                                          disabled={updatingOrder || !cancelMemo.trim()}
+                                          onClick={() => handleOrderStatusChange(order.id, 'cancelled', cancelMemo.trim())}
+                                        >
+                                          취소 확정
+                                        </button>
+                                        <button
+                                          className="btn-sm"
+                                          disabled={updatingOrder || !cancelMemo.trim()}
+                                          onClick={() => handleOrderStatusChange(order.id, 'refunded', cancelMemo.trim())}
+                                          style={{ background: 'rgba(139,92,246,0.1)', color: '#7C3AED' }}
+                                        >
+                                          환불 처리
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        );
+                      })}
+                    </table>
+                  </div>
+                  <PaginationBar
+                    total={sortedOrders.length}
+                    page={currentPage.orders}
+                    setPage={p => setCurrentPage(prev => ({ ...prev, orders: p }))}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ═══════ Coupons Tab ═══════ */}
+          {activeTab === 'coupons' && (
+            <div className="admin-panel">
+              <h2>쿠폰 관리</h2>
+
+              <div className="admin-coupon-form">
+                <h3><i className="fa-solid fa-plus" /> 쿠폰 발행</h3>
+                <div className="coupon-form-row">
+                  <label>이용 기간:</label>
+                  <select
+                    value={couponDays}
+                    onChange={e => setCouponDays(Number(e.target.value))}
+                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '14px' }}
+                  >
+                    <option value={1}>1일</option>
+                    <option value={3}>3일</option>
+                    <option value={7}>7일</option>
+                    <option value={10}>10일</option>
+                    <option value={14}>14일</option>
+                    <option value={30}>30일</option>
+                    <option value={60}>60일</option>
+                    <option value={90}>90일</option>
+                    <option value={365}>365일</option>
+                  </select>
+                  <label>발행 수량:</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={couponQty}
+                    onChange={e => setCouponQty(Number(e.target.value))}
+                    className="coupon-qty-input"
+                  />
+                  <button className="btn btn-primary" onClick={handleGenerateCoupons} disabled={generating}>
+                    {generating ? '생성 중...' : '쿠폰 생성'}
+                  </button>
+                  <button className="btn btn-secondary" onClick={handleCopyAllCodes}>
+                    <i className="fa-solid fa-copy" /> 활성 코드 복사
+                  </button>
+                </div>
+                <p className="coupon-form-note">{couponDays}일 이용권 (1회용) 쿠폰이 생성됩니다.</p>
+              </div>
+
+              {coupons.length === 0 ? (
+                <p className="admin-empty">발행된 쿠폰이 없습니다.</p>
+              ) : (
+                <>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th className="sortable-th" onClick={() => handleSort('coupons', 'code')}>
+                            코드 <SortIcon col="code" config={sortConfig.coupons} />
+                          </th>
+                          <th className="sortable-th" onClick={() => handleSort('coupons', 'days')}>
+                            이용기간 <SortIcon col="days" config={sortConfig.coupons} />
+                          </th>
+                          <th>사용/최대</th>
+                          <th className="sortable-th" onClick={() => handleSort('coupons', 'is_active')}>
+                            상태 <SortIcon col="is_active" config={sortConfig.coupons} />
+                          </th>
+                          <th className="sortable-th" onClick={() => handleSort('coupons', 'created_at')}>
+                            생성일 <SortIcon col="created_at" config={sortConfig.coupons} />
+                          </th>
+                          <th>관리</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedCoupons.map(coupon => (
+                          <tr key={coupon.id}>
+                            <td className="coupon-code-cell">{coupon.code}</td>
+                            <td>{coupon.days || 1}일</td>
+                            <td>{coupon.used_count}/{coupon.max_uses}</td>
+                            <td>
+                              <span className={`table-badge ${coupon.is_active && coupon.used_count < coupon.max_uses ? 'pass' : 'fail'}`}>
+                                {!coupon.is_active ? '비활성' : coupon.used_count >= coupon.max_uses ? '소진' : '활성'}
+                              </span>
+                            </td>
+                            <td>{new Date(coupon.created_at).toLocaleDateString('ko-KR')}</td>
+                            <td>
+                              {coupon.is_active && coupon.used_count < coupon.max_uses && (
+                                <button className="btn-sm btn-danger" onClick={() => handleDeactivateCoupon(coupon.id)}>
+                                  비활성화
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationBar
+                    total={sortedCoupons.length}
+                    page={currentPage.coupons}
+                    setPage={p => setCurrentPage(prev => ({ ...prev, coupons: p }))}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ═══════ Progress Tab ═══════ */}
+          {activeTab === 'progress' && (
+            <div className="admin-panel">
+              <h2><i className="fa-solid fa-chart-line" /> 회원 학습현황 ({filteredMembers.length}명)</h2>
+
               <input
                 type="text"
-                className="admin-order-search"
-                placeholder="주문번호, 이메일, 이름 검색..."
-                value={orderSearch}
-                onChange={e => setOrderSearch(e.target.value)}
+                className="admin-member-search"
+                placeholder="이름, 이메일, 전화번호로 검색..."
+                value={progressSearch}
+                onChange={e => { setProgressSearch(e.target.value); setCurrentPage(prev => ({ ...prev, progress: 1 })); }}
               />
-            </div>
 
-            {filteredOrders.length === 0 ? (
-              <p className="admin-empty">해당 조건의 주문이 없습니다.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table admin-order-table">
-                  <colgroup>
-                    <col style={{ width: '13%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '14%' }} />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>주문번호</th>
-                      <th>주문자</th>
-                      <th>플랜</th>
-                      <th>금액</th>
-                      <th>상태</th>
-                      <th>만료일</th>
-                      <th>결제일</th>
-                    </tr>
-                  </thead>
-                  {filteredOrders.map(order => {
-                    const status = STATUS_LABELS[order.payment_status] || { text: order.payment_status, cls: '' };
-                    const isExpanded = expandedOrder === order.id;
-                    const isExpired = order.expires_at && new Date(order.expires_at) < new Date();
-                    return (
-                      <tbody key={order.id}>
-                        <tr className={`admin-order-row ${isExpanded ? 'expanded' : ''}`} onClick={() => setExpandedOrder(isExpanded ? null : order.id)} style={{ cursor: 'pointer' }}>
-                          <td className="order-num-cell">{order.order_number}</td>
-                          <td className="order-user-cell">
-                            <span className="order-user-name">{order.user_name || order.user_email?.split('@')[0] || '-'}</span>
-                            <span className="order-user-email">{order.user_email}</span>
-                          </td>
-                          <td className="order-plan-cell">{PLAN_LABELS[order.plan_type] || order.plan_type}</td>
-                          <td className="order-amount-cell">{(order.total_amount || 0).toLocaleString()}원</td>
-                          <td><span className={`table-badge ${status.cls}`}>{status.text}</span></td>
-                          <td>
-                            {order.expires_at ? (
-                              <span className={`order-date-cell ${isExpired ? 'expired' : 'active'}`}>
-                                {new Date(order.expires_at).toLocaleDateString('ko-KR')}
-                                {isExpired ? ' (만료)' : ''}
-                              </span>
-                            ) : '-'}
-                          </td>
-                          <td className="order-date-cell">{new Date(order.created_at).toLocaleDateString('ko-KR')}</td>
+              {filteredMembers.length === 0 ? (
+                <p className="admin-empty">검색 결과가 없습니다.</p>
+              ) : (
+                <>
+                  <div className="admin-table-wrap">
+                    <table className="admin-table admin-progress-table">
+                      <thead>
+                        <tr>
+                          <th className="sortable-th" onClick={() => handleSort('progress', 'name')}>
+                            회원명 <SortIcon col="name" config={sortConfig.progress} />
+                          </th>
+                          <th>이메일</th>
+                          <th>전화번호</th>
+                          <th>가입일</th>
+                          <th className="sortable-th" onClick={() => handleSort('progress', 'lastActivity')}>
+                            마지막 활동 <SortIcon col="lastActivity" config={sortConfig.progress} />
+                          </th>
+                          <th>비고</th>
                         </tr>
-                        {isExpanded && (
-                          <tr>
-                            <td colSpan={7} style={{ padding: 0 }}>
-                              <div className="admin-order-detail">
-                                <div className="admin-order-detail-grid">
-                                  <div className="admin-order-detail-item">
-                                    <dt>주문번호</dt><dd>{order.order_number}</dd>
+                      </thead>
+                      <tbody>
+                        {pagedProgress.map(member => {
+                          const email = member.email;
+                          const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
+                          const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
+                          const latestPaid = paidOrders[0];
+                          const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
+                          const userRedemptions = redemptions.filter(r => (r.user_email || '').toLowerCase() === email);
+                          let couponActive = false;
+                          if (userRedemptions.length > 0) {
+                            for (const r of userRedemptions) {
+                              const cp = coupons.find(c => c.id === r.coupon_id);
+                              const days = cp?.days || 1;
+                              const exp = new Date(new Date(r.created_at).getTime() + days * 86400000);
+                              if (exp > new Date()) { couponActive = true; break; }
+                            }
+                          }
+                          const isActive = orderActive || couponActive;
+                          const statusText = isActive
+                            ? (couponActive && !orderActive ? '쿠폰 이용중' : '이용중')
+                            : (userOrders.length > 0 ? '만료' : '미결제');
+
+                          return (
+                            <tr key={email}>
+                              <td>
+                                <span className="admin-member-name" onClick={() => handleSelectMember(member)}>{member.name || '-'}</span>
+                              </td>
+                              <td>{email}</td>
+                              <td>{member.phone || '-'}</td>
+                              <td>{new Date(member.firstSeen).toLocaleDateString('ko-KR')}</td>
+                              <td>{new Date(member.lastActivity).toLocaleDateString('ko-KR')}</td>
+                              <td>
+                                <span className={`table-badge ${isActive ? 'pass' : ''}`}>{statusText}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationBar
+                    total={sortedProgress.length}
+                    page={currentPage.progress}
+                    setPage={p => setCurrentPage(prev => ({ ...prev, progress: p }))}
+                  />
+                </>
+              )}
+
+              {/* 회원 학습현황 모달 */}
+              {selectedMember && (
+                <div className="admin-modal-overlay" onClick={() => setSelectedMember(null)}>
+                  <div className="admin-modal" onClick={e => e.stopPropagation()}>
+                    <div className="admin-modal-header">
+                      <h3>
+                        <i className="fa-solid fa-user" /> {selectedMember.name || selectedMember.email} 학습 현황
+                      </h3>
+                      <div className="admin-modal-actions">
+                        <button className="admin-modal-btn" onClick={handleDownloadPDF} disabled={progressLoading || pdfExporting} title="PDF 다운로드">
+                          {pdfExporting ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-file-pdf" />}
+                          <span>PDF</span>
+                        </button>
+                        <button className="admin-modal-btn" onClick={handlePrint} disabled={progressLoading} title="인쇄">
+                          <i className="fa-solid fa-print" />
+                          <span>인쇄</span>
+                        </button>
+                        <button className="admin-modal-close" onClick={() => setSelectedMember(null)}>
+                          <i className="fa-solid fa-xmark" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="admin-modal-body" ref={modalBodyRef}>
+                      {progressLoading ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                          <div className="loading-spinner" />
+                        </div>
+                      ) : (
+                        <>
+                          {/* 필기 통계 */}
+                          <div className="dashboard-stats-grid">
+                            <div className="stat-card">
+                              <div className="stat-label">필기 시험수</div>
+                              <span className="stat-number">{pilgiStats.total}</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">필기 평균</div>
+                              <span className="stat-number">{pilgiStats.avg}점</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">필기 합격률</div>
+                              <span className="stat-number">{pilgiStats.passRate}%</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">필기 합격</div>
+                              <span className="stat-number">{pilgiStats.passCount}회</span>
+                            </div>
+                          </div>
+
+                          {/* 실기 통계 */}
+                          <div className="dashboard-stats-grid" style={{ marginTop: '16px' }}>
+                            <div className="stat-card">
+                              <div className="stat-label">실기 연습수</div>
+                              <span className="stat-number">{silgiStats.total}</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">실기 평균</div>
+                              <span className="stat-number">{silgiStats.avg}점</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">실기 합격률</div>
+                              <span className="stat-number">{silgiStats.passRate}%</span>
+                            </div>
+                            <div className="stat-card">
+                              <div className="stat-label">실기 합격</div>
+                              <span className="stat-number">{silgiStats.passCount}회</span>
+                            </div>
+                          </div>
+
+                          {pilgiStats.total === 0 && silgiStats.total === 0 ? (
+                            <p className="admin-empty">해당 회원의 학습 기록이 없습니다.</p>
+                          ) : (
+                            <>
+                              {/* 차트 영역 */}
+                              <div className="dashboard-charts" style={{ marginTop: '24px' }}>
+                                {pilgiStats.total > 0 && (
+                                  <div className="dashboard-card">
+                                    <h4>과목별 평균 점수</h4>
+                                    <RadarChart scores={memberAvgScores} />
                                   </div>
-                                  <div className="admin-order-detail-item">
-                                    <dt>이메일</dt><dd>{order.user_email || '-'}</dd>
-                                  </div>
-                                  <div className="admin-order-detail-item">
-                                    <dt>전화번호</dt><dd>{order.user_phone || '-'}</dd>
-                                  </div>
-                                  <div className="admin-order-detail-item">
-                                    <dt>결제수단</dt><dd>{order.payment_method || 'card'}</dd>
-                                  </div>
-                                  {order.portone_payment_id && (
-                                    <div className="admin-order-detail-item wide">
-                                      <dt>결제 ID</dt><dd style={{ fontFamily: 'monospace', fontSize: '12px' }}>{order.portone_payment_id}</dd>
-                                    </div>
-                                  )}
-                                  {order.paid_at && (
-                                    <div className="admin-order-detail-item">
-                                      <dt>결제일시</dt><dd>{new Date(order.paid_at).toLocaleString('ko-KR')}</dd>
-                                    </div>
-                                  )}
-                                  {order.cancelled_at && (
-                                    <div className="admin-order-detail-item">
-                                      <dt>취소일시</dt><dd style={{ color: '#DC2626' }}>{new Date(order.cancelled_at).toLocaleString('ko-KR')}</dd>
-                                    </div>
-                                  )}
-                                  {order.cancel_reason && (
-                                    <div className="admin-order-detail-item wide">
-                                      <dt>취소사유</dt><dd style={{ color: '#DC2626' }}>{order.cancel_reason}</dd>
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="admin-order-actions">
-                                  <span style={{ fontSize: '13px', fontWeight: 600 }}>상태 변경:</span>
-                                  {['pending', 'paid', 'cancelled', 'refunded'].map(s => (
-                                    <button
-                                      key={s}
-                                      className={`btn-sm ${order.payment_status === s ? 'active' : ''}`}
-                                      disabled={order.payment_status === s || updatingOrder}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (s === 'cancelled' || s === 'refunded') {
-                                          setCancelMemo('');
-                                        } else {
-                                          handleOrderStatusChange(order.id, s);
-                                        }
-                                      }}
-                                      style={{
-                                        background: order.payment_status === s ? 'var(--primary-blue)' : 'rgba(27,58,107,0.08)',
-                                        color: order.payment_status === s ? '#fff' : 'var(--text-primary)',
-                                        opacity: order.payment_status === s ? 0.6 : 1,
-                                      }}
-                                    >
-                                      {STATUS_LABELS[s]?.text || s}
-                                    </button>
-                                  ))}
-                                </div>
-                                {(order.payment_status !== 'cancelled' && order.payment_status !== 'refunded') && (
-                                  <div className="admin-order-cancel-form" onClick={e => e.stopPropagation()}>
-                                    <input
-                                      type="text"
-                                      placeholder="취소/환불 사유를 입력하세요..."
-                                      value={cancelMemo}
-                                      onChange={e => setCancelMemo(e.target.value)}
-                                      style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--border-light)', borderRadius: '8px', fontSize: '13px' }}
-                                    />
-                                    <button
-                                      className="btn-sm btn-danger"
-                                      disabled={updatingOrder || !cancelMemo.trim()}
-                                      onClick={() => handleOrderStatusChange(order.id, 'cancelled', cancelMemo.trim())}
-                                    >
-                                      취소 확정
-                                    </button>
-                                    <button
-                                      className="btn-sm"
-                                      disabled={updatingOrder || !cancelMemo.trim()}
-                                      onClick={() => handleOrderStatusChange(order.id, 'refunded', cancelMemo.trim())}
-                                      style={{ background: 'rgba(139,92,246,0.1)', color: '#7C3AED' }}
-                                    >
-                                      환불 처리
-                                    </button>
+                                )}
+                                {pilgiStats.total > 0 && (
+                                  <div className="dashboard-card">
+                                    <h4>필기 점수 추이</h4>
+                                    <BarChart sessions={[...memberPilgi].reverse()} />
                                   </div>
                                 )}
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    );
-                  })}
-                </table>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Coupons Tab */}
-        {activeTab === 'coupons' && (
-          <div className="admin-panel">
-            <h2>쿠폰 관리</h2>
+                              {/* 약점 과목 */}
+                              {weakSubjects.length > 0 && (
+                                <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                  <h4><i className="fa-solid fa-triangle-exclamation" style={{ color: '#F59E0B' }} /> 약점 과목</h4>
+                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                    {weakSubjects.map(s => (
+                                      <span key={s.code} className="table-badge fail">
+                                        {s.name} ({memberAvgScores[s.code]}점)
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
-            <div className="admin-coupon-form">
-              <h3><i className="fa-solid fa-plus" /> 쿠폰 발행</h3>
-              <div className="coupon-form-row">
-                <label>이용 기간:</label>
-                <select
-                  value={couponDays}
-                  onChange={e => setCouponDays(Number(e.target.value))}
-                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '14px' }}
-                >
-                  <option value={1}>1일</option>
-                  <option value={3}>3일</option>
-                  <option value={7}>7일</option>
-                  <option value={10}>10일</option>
-                  <option value={14}>14일</option>
-                  <option value={30}>30일</option>
-                  <option value={60}>60일</option>
-                  <option value={90}>90일</option>
-                  <option value={365}>365일</option>
-                </select>
-                <label>발행 수량:</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={couponQty}
-                  onChange={e => setCouponQty(Number(e.target.value))}
-                  className="coupon-qty-input"
-                />
-                <button className="btn btn-primary" onClick={handleGenerateCoupons} disabled={generating}>
-                  {generating ? '생성 중...' : '쿠폰 생성'}
-                </button>
-                <button className="btn btn-secondary" onClick={handleCopyAllCodes}>
-                  <i className="fa-solid fa-copy" /> 활성 코드 복사
-                </button>
-              </div>
-              <p className="coupon-form-note">{couponDays}일 이용권 (1회용) 쿠폰이 생성됩니다.</p>
-            </div>
+                              {/* 최근 필기 시험 */}
+                              {memberPilgi.length > 0 && (
+                                <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                  <h4>최근 필기 시험</h4>
+                                  <div className="admin-table-wrap">
+                                    <table className="admin-table">
+                                      <thead>
+                                        <tr>
+                                          <th>회차</th>
+                                          <th>점수</th>
+                                          <th>합격여부</th>
+                                          <th>응시일</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {memberPilgi.slice(0, 10).map((s: any, i: number) => (
+                                          <tr key={s.id}>
+                                            <td>{memberPilgi.length - i}회</td>
+                                            <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
+                                            <td>
+                                              <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
+                                                {s.is_pass ? '합격' : '불합격'}
+                                              </span>
+                                            </td>
+                                            <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
 
-            {coupons.length === 0 ? (
-              <p className="admin-empty">발행된 쿠폰이 없습니다.</p>
-            ) : (
-              <div className="admin-table-wrap">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>코드</th>
-                      <th>이용기간</th>
-                      <th>사용/최대</th>
-                      <th>상태</th>
-                      <th>생성일</th>
-                      <th>관리</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {coupons.map(coupon => (
-                      <tr key={coupon.id}>
-                        <td className="coupon-code-cell">{coupon.code}</td>
-                        <td>{coupon.days || 1}일</td>
-                        <td>{coupon.used_count}/{coupon.max_uses}</td>
-                        <td>
-                          <span className={`table-badge ${coupon.is_active && coupon.used_count < coupon.max_uses ? 'pass' : 'fail'}`}>
-                            {!coupon.is_active ? '비활성' : coupon.used_count >= coupon.max_uses ? '소진' : '활성'}
-                          </span>
-                        </td>
-                        <td>{new Date(coupon.created_at).toLocaleDateString('ko-KR')}</td>
-                        <td>
-                          {coupon.is_active && coupon.used_count < coupon.max_uses && (
-                            <button className="btn-sm btn-danger" onClick={() => handleDeactivateCoupon(coupon.id)}>
-                              비활성화
-                            </button>
+                              {/* 최근 실기 연습 */}
+                              {memberSilgi.length > 0 && (
+                                <div className="dashboard-card" style={{ marginTop: '16px' }}>
+                                  <h4>최근 실기 연습</h4>
+                                  <div className="admin-table-wrap">
+                                    <table className="admin-table">
+                                      <thead>
+                                        <tr>
+                                          <th>회차</th>
+                                          <th>점수</th>
+                                          <th>합격여부</th>
+                                          <th>연습일</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {memberSilgi.slice(0, 10).map((s: any, i: number) => (
+                                          <tr key={s.id}>
+                                            <td>{memberSilgi.length - i}회</td>
+                                            <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
+                                            <td>
+                                              <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
+                                                {s.is_pass ? '합격' : '불합격'}
+                                              </span>
+                                            </td>
+                                            <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 회원 학습현황 Tab */}
-        {activeTab === 'progress' && (
-          <div className="admin-panel">
-            <h2><i className="fa-solid fa-chart-line" /> 회원 학습현황 ({filteredMembers.length}명)</h2>
-
-            {/* 검색바 */}
-            <input
-              type="text"
-              className="admin-member-search"
-              placeholder="이름, 이메일, 전화번호로 검색..."
-              value={progressSearch}
-              onChange={e => setProgressSearch(e.target.value)}
-            />
-
-            {/* 회원 목록 테이블 */}
-            {filteredMembers.length === 0 ? (
-              <p className="admin-empty">검색 결과가 없습니다.</p>
-            ) : (
-              <div className="admin-table-wrap" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                <table className="admin-table admin-progress-table">
-                  <thead>
-                    <tr>
-                      <th>회원명</th>
-                      <th>이메일</th>
-                      <th>전화번호</th>
-                      <th>가입일</th>
-                      <th>마지막 활동</th>
-                      <th>비고</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMembers.map(member => {
-                      const email = member.email;
-                      const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
-                      const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
-                      const latestPaid = paidOrders[0];
-                      const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
-                      const userRedemptions = redemptions.filter(r => (r.user_email || '').toLowerCase() === email);
-                      let couponActive = false;
-                      if (userRedemptions.length > 0) {
-                        for (const r of userRedemptions) {
-                          const cp = coupons.find(c => c.id === r.coupon_id);
-                          const days = cp?.days || 1;
-                          const exp = new Date(new Date(r.created_at).getTime() + days * 86400000);
-                          if (exp > new Date()) { couponActive = true; break; }
-                        }
-                      }
-                      const isActive = orderActive || couponActive;
-                      const statusText = isActive
-                        ? (couponActive && !orderActive ? '쿠폰 이용중' : '이용중')
-                        : (userOrders.length > 0 ? '만료' : '미결제');
-
-                      return (
-                        <tr key={email}>
-                          <td>
-                            <span className="admin-member-name" onClick={() => handleSelectMember(member)}>{member.name || '-'}</span>
-                          </td>
-                          <td>{email}</td>
-                          <td>{member.phone || '-'}</td>
-                          <td>{new Date(member.firstSeen).toLocaleDateString('ko-KR')}</td>
-                          <td>{new Date(member.lastActivity).toLocaleDateString('ko-KR')}</td>
-                          <td>
-                            <span className={`table-badge ${isActive ? 'pass' : ''}`}>{statusText}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* 회원 학습현황 모달 */}
-            {selectedMember && (
-              <div className="admin-modal-overlay" onClick={() => setSelectedMember(null)}>
-                <div className="admin-modal" onClick={e => e.stopPropagation()}>
-                  <div className="admin-modal-header">
-                    <h3>
-                      <i className="fa-solid fa-user" /> {selectedMember.name || selectedMember.email} 학습 현황
-                    </h3>
-                    <div className="admin-modal-actions">
-                      <button className="admin-modal-btn" onClick={handleDownloadPDF} disabled={progressLoading || pdfExporting} title="PDF 다운로드">
-                        {pdfExporting ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-file-pdf" />}
-                        <span>PDF</span>
-                      </button>
-                      <button className="admin-modal-btn" onClick={handlePrint} disabled={progressLoading} title="인쇄">
-                        <i className="fa-solid fa-print" />
-                        <span>인쇄</span>
-                      </button>
-                      <button className="admin-modal-close" onClick={() => setSelectedMember(null)}>
-                        <i className="fa-solid fa-xmark" />
-                      </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="admin-modal-body" ref={modalBodyRef}>
-                    {progressLoading ? (
-                      <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                        <div className="loading-spinner" />
-                      </div>
-                    ) : (
-                      <>
-                        {/* 필기 통계 */}
-                        <div className="dashboard-stats-grid">
-                          <div className="stat-card">
-                            <div className="stat-label">필기 시험수</div>
-                            <span className="stat-number">{pilgiStats.total}</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">필기 평균</div>
-                            <span className="stat-number">{pilgiStats.avg}점</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">필기 합격률</div>
-                            <span className="stat-number">{pilgiStats.passRate}%</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">필기 합격</div>
-                            <span className="stat-number">{pilgiStats.passCount}회</span>
-                          </div>
-                        </div>
-
-                        {/* 실기 통계 */}
-                        <div className="dashboard-stats-grid" style={{ marginTop: '16px' }}>
-                          <div className="stat-card">
-                            <div className="stat-label">실기 연습수</div>
-                            <span className="stat-number">{silgiStats.total}</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">실기 평균</div>
-                            <span className="stat-number">{silgiStats.avg}점</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">실기 합격률</div>
-                            <span className="stat-number">{silgiStats.passRate}%</span>
-                          </div>
-                          <div className="stat-card">
-                            <div className="stat-label">실기 합격</div>
-                            <span className="stat-number">{silgiStats.passCount}회</span>
-                          </div>
-                        </div>
-
-                        {pilgiStats.total === 0 && silgiStats.total === 0 ? (
-                          <p className="admin-empty">해당 회원의 학습 기록이 없습니다.</p>
-                        ) : (
-                          <>
-                            {/* 차트 영역 */}
-                            <div className="dashboard-charts" style={{ marginTop: '24px' }}>
-                              {pilgiStats.total > 0 && (
-                                <div className="dashboard-card">
-                                  <h4>과목별 평균 점수</h4>
-                                  <RadarChart scores={memberAvgScores} />
-                                </div>
-                              )}
-                              {pilgiStats.total > 0 && (
-                                <div className="dashboard-card">
-                                  <h4>필기 점수 추이</h4>
-                                  <BarChart sessions={[...memberPilgi].reverse()} />
-                                </div>
-                              )}
-                            </div>
-
-                            {/* 약점 과목 */}
-                            {weakSubjects.length > 0 && (
-                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                                <h4><i className="fa-solid fa-triangle-exclamation" style={{ color: '#F59E0B' }} /> 약점 과목</h4>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-                                  {weakSubjects.map(s => (
-                                    <span key={s.code} className="table-badge fail">
-                                      {s.name} ({memberAvgScores[s.code]}점)
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* 최근 필기 시험 */}
-                            {memberPilgi.length > 0 && (
-                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                                <h4>최근 필기 시험</h4>
-                                <div className="admin-table-wrap">
-                                  <table className="admin-table">
-                                    <thead>
-                                      <tr>
-                                        <th>회차</th>
-                                        <th>점수</th>
-                                        <th>합격여부</th>
-                                        <th>응시일</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {memberPilgi.slice(0, 10).map((s: any, i: number) => (
-                                        <tr key={s.id}>
-                                          <td>{memberPilgi.length - i}회</td>
-                                          <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
-                                          <td>
-                                            <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
-                                              {s.is_pass ? '합격' : '불합격'}
-                                            </span>
-                                          </td>
-                                          <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* 최근 실기 연습 */}
-                            {memberSilgi.length > 0 && (
-                              <div className="dashboard-card" style={{ marginTop: '16px' }}>
-                                <h4>최근 실기 연습</h4>
-                                <div className="admin-table-wrap">
-                                  <table className="admin-table">
-                                    <thead>
-                                      <tr>
-                                        <th>회차</th>
-                                        <th>점수</th>
-                                        <th>합격여부</th>
-                                        <th>연습일</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {memberSilgi.slice(0, 10).map((s: any, i: number) => (
-                                        <tr key={s.id}>
-                                          <td>{memberSilgi.length - i}회</td>
-                                          <td style={{ fontWeight: 700 }}>{s.score_total}점</td>
-                                          <td>
-                                            <span className={`table-badge ${s.is_pass ? 'pass' : 'fail'}`}>
-                                              {s.is_pass ? '합격' : '불합격'}
-                                            </span>
-                                          </td>
-                                          <td>{new Date(s.completed_at).toLocaleDateString('ko-KR')}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </main>
       </div>
     </>
   );

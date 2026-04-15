@@ -754,19 +754,41 @@
 /* ===== Admin Dashboard Responsive ===== */
 @media (max-width: 1023px) {
     .admin-stats { grid-template-columns: repeat(2, 1fr); }
+    .admin-main { padding: 24px; }
 }
-@media (max-width: 767px) {
+@media (max-width: 768px) {
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 100;
+        box-shadow: none;
+    }
+    .admin-sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+    .admin-mobile-toggle {
+        display: flex;
+    }
+    .admin-sidebar-overlay {
+        display: block;
+    }
+    .admin-main { padding: 20px 16px; padding-top: 64px; }
     .admin-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .admin-stat-card { padding: 18px 16px; }
     .admin-stat-value { font-size: 22px; }
-    .admin-tabs { gap: 0; overflow-x: auto; }
-    .admin-tab { padding: 10px 16px; font-size: 13px; white-space: nowrap; }
     .admin-panel { padding: 16px; }
     .admin-table { font-size: 13px; }
     .admin-table th, .admin-table td { padding: 8px 8px; }
     .coupon-form-row { flex-direction: column; align-items: stretch; gap: 10px; }
     .coupon-form-row .btn { width: 100%; justify-content: center; }
     .admin-coupon-form { padding: 16px; }
+    .admin-page-header h1 { font-size: 20px; }
+    .admin-pagination { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 639px) {
     .admin-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
