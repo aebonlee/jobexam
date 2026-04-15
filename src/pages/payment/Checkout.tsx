@@ -77,7 +77,7 @@ function CheckoutContent() {
           ? new Date(now.getTime() + item.days * 24 * 60 * 60 * 1000).toISOString()
           : null;
 
-        const { error: insertError } = await supabase.from(TABLES.ORDERS).insert({
+        const orderPayload = {
           order_number: itemOrderNumber,
           user_id: user!.id,
           user_email: email,
@@ -90,12 +90,16 @@ function CheckoutContent() {
           portone_payment_id: result.paymentId,
           paid_at: now.toISOString(),
           expires_at: expiresAt,
-        });
+        };
 
-        if (insertError) {
-          console.error('주문 저장 실패:', insertError);
-          insertFailed = true;
+        let saved = false;
+        for (let retry = 0; retry < 3; retry++) {
+          const { error: insertError } = await supabase.from(TABLES.ORDERS).insert(orderPayload);
+          if (!insertError) { saved = true; break; }
+          console.error(`주문 저장 실패 (시도 ${retry + 1}/3):`, insertError);
+          if (retry < 2) await new Promise(r => setTimeout(r, 1000));
         }
+        if (!saved) insertFailed = true;
       }
 
       clearCart();
