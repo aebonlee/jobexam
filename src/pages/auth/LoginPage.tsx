@@ -1,9 +1,24 @@
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import SEOHead from '../../components/SEOHead';
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInWithKakao } = useAuth();
+  const [error, setError] = useState('');
+
+  // OAuth 에러 파라미터 감지 (Google/Kakao 인증 실패 시 URL에 에러 포함)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace('#', '?'));
+    const errorCode = params.get('error') || hash.get('error');
+    const errorDesc = params.get('error_description') || hash.get('error_description');
+    if (errorCode) {
+      console.error('[Auth] OAuth error:', errorCode, errorDesc);
+      setError(errorDesc || `로그인 오류: ${errorCode}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
@@ -19,6 +34,16 @@ export default function LoginPage() {
             <h1 className="login-title">로그인</h1>
             <p className="login-subtitle">소셜 계정으로 간편하게 시작하세요</p>
           </div>
+
+          {error && (
+            <div className="login-error" style={{
+              background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px',
+              padding: '12px 16px', color: '#dc2626', fontSize: '13px', marginBottom: '16px',
+              lineHeight: '1.5'
+            }}>
+              {error}
+            </div>
+          )}
 
           <div className="login-buttons">
             <button className="login-btn google-btn" onClick={signInWithGoogle}>
@@ -44,7 +69,7 @@ export default function LoginPage() {
           </div>
 
           <p className="login-terms">
-            로그인 시 <a href="#">이용약관</a> 및 <a href="#">개인정보처리방침</a>에 동의하게 됩니다.
+            로그인 시 <a href="/terms">이용약관</a> 및 <a href="/privacy">개인정보처리방침</a>에 동의하게 됩니다.
           </p>
 
           <div className="login-footer">

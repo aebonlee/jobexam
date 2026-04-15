@@ -80,6 +80,13 @@ function OrderHistoryContent() {
                         {order.plan_type === '90day' && '90일 이용권'}
                         {order.plan_type === 'lifetime' && '평생 이용권'}
                         {order.plan_type === '1day_trial' && '1일 체험 이용권'}
+                        {order.plan_type === '1day' && '1일 이용권'}
+                        {order.plan_type === '3day' && '3일 이용권'}
+                        {order.plan_type === '7day' && '7일 이용권'}
+                        {order.plan_type === '10day' && '10일 이용권'}
+                        {order.plan_type === '14day' && '14일 이용권'}
+                        {order.plan_type === '60day' && '60일 이용권'}
+                        {order.plan_type === '365day' && '365일 이용권'}
                       </strong>
                       {isActive && <span className="badge-active">이용중</span>}
                     </div>
