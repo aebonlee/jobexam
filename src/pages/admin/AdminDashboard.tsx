@@ -19,11 +19,11 @@ function generateCouponCode(): string {
 
 type Tab = 'members' | 'orders' | 'coupons' | 'progress';
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 10;
 
 const TAB_CONFIG: { key: Tab; icon: string; label: string; desc: string }[] = [
   { key: 'members', icon: 'fa-solid fa-users', label: '회원 관리', desc: '등록된 회원 목록을 확인하세요' },
-  { key: 'orders', icon: 'fa-solid fa-receipt', label: '주문 관리', desc: '결제 내역과 주문 상태를 관리하세요' },
+  { key: 'orders', icon: 'fa-solid fa-credit-card', label: '결제 관리', desc: '포트원 결제 내역을 관리하세요' },
   { key: 'coupons', icon: 'fa-solid fa-ticket', label: '쿠폰 관리', desc: '쿠폰 발행 및 상태를 관리하세요' },
   { key: 'progress', icon: 'fa-solid fa-chart-line', label: '학습 현황', desc: '회원별 학습 데이터를 확인하세요' },
 ];
@@ -165,8 +165,12 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  // 포트원(카드) 결제만 분리 (쿠폰 등록 제외)
+  const portoneOrders = useMemo(() =>
+    orders.filter(o => o.payment_method !== 'coupon'), [orders]);
+
   // Stats
-  const totalRevenue = orders
+  const totalRevenue = portoneOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + (o.total_amount || 0), 0);
   const activeCoupons = coupons.filter(c => c.is_active && c.used_count < c.max_uses).length;
@@ -288,20 +292,20 @@ export default function AdminDashboard() {
   };
 
   const orderSummary = useMemo(() => {
-    const paid = orders.filter(o => o.payment_status === 'paid');
-    const cancelled = orders.filter(o => o.payment_status === 'cancelled');
-    const refunded = orders.filter(o => o.payment_status === 'refunded');
+    const paid = portoneOrders.filter(o => o.payment_status === 'paid');
+    const cancelled = portoneOrders.filter(o => o.payment_status === 'cancelled');
+    const refunded = portoneOrders.filter(o => o.payment_status === 'refunded');
     return {
-      total: orders.length,
+      total: portoneOrders.length,
       paidCount: paid.length,
       paidAmount: paid.reduce((s, o) => s + (o.total_amount || 0), 0),
       cancelledCount: cancelled.length,
       refundedCount: refunded.length,
     };
-  }, [orders]);
+  }, [portoneOrders]);
 
   const filteredOrders = useMemo(() => {
-    let list = orders;
+    let list = portoneOrders;
     if (orderFilter !== 'all') list = list.filter(o => (o.payment_status || 'pending') === orderFilter);
     if (orderSearch.trim()) {
       const q = orderSearch.toLowerCase();
@@ -312,7 +316,7 @@ export default function AdminDashboard() {
       );
     }
     return list;
-  }, [orders, orderFilter, orderSearch]);
+  }, [portoneOrders, orderFilter, orderSearch]);
 
   // Reset page when filter/search changes
   useEffect(() => {
@@ -567,7 +571,7 @@ ${content}
   // Badge counts for sidebar
   const badgeCounts: Record<Tab, number> = {
     members: members.length,
-    orders: orders.length,
+    orders: portoneOrders.length,
     coupons: activeCoupons,
     progress: members.length,
   };
@@ -634,9 +638,9 @@ ${content}
               <div className="admin-stat-label">총 회원수</div>
             </div>
             <div className="admin-stat-card">
-              <div className="admin-stat-icon"><i className="fa-solid fa-receipt" /></div>
-              <div className="admin-stat-value">{orders.length}</div>
-              <div className="admin-stat-label">총 주문수</div>
+              <div className="admin-stat-icon"><i className="fa-solid fa-credit-card" /></div>
+              <div className="admin-stat-value">{portoneOrders.length}</div>
+              <div className="admin-stat-label">결제 건수</div>
             </div>
             <div className="admin-stat-card">
               <div className="admin-stat-icon"><i className="fa-solid fa-won-sign" /></div>
@@ -680,7 +684,7 @@ ${content}
                       <tbody>
                         {pagedMembers.map(member => {
                           const email = member.email;
-                          const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email);
+                          const userOrders = orders.filter(o => (o.user_email || '').toLowerCase() === email && o.payment_method !== 'coupon');
                           const paidOrders = userOrders.filter(o => o.payment_status === 'paid');
                           const latestPaid = paidOrders[0];
                           const orderActive = latestPaid?.expires_at && new Date(latestPaid.expires_at) > new Date();
@@ -747,7 +751,7 @@ ${content}
               <div className="admin-order-toolbar">
                 <div className="admin-order-filters">
                   {['all', 'paid', 'pending', 'cancelled', 'refunded', 'failed'].map(f => {
-                    const count = f === 'all' ? orders.length : orders.filter(o => (o.payment_status || 'pending') === f).length;
+                    const count = f === 'all' ? portoneOrders.length : portoneOrders.filter(o => (o.payment_status || 'pending') === f).length;
                     if (f !== 'all' && count === 0) return null;
                     const label = f === 'all' ? '전체' : (STATUS_LABELS[f]?.text || f);
                     return (
