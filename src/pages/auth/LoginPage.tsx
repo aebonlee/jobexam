@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import SEOHead from '../../components/SEOHead';
 
@@ -73,7 +73,8 @@ export default function LoginPage() {
           </p>
 
           <div className="login-footer">
-            학습 기록은 로그인 후 자동으로 저장됩니다.
+            계정이 없으신가요?{' '}
+            <Link to="/register" className="login-footer-link">회원가입</Link>
           </div>
         </div>
       </div>

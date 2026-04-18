@@ -12,6 +12,7 @@ import PaidGuard from './components/PaidGuard';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 
 import PilgiHome from './pages/pilgi/PilgiHome';
 import ExamSelect from './pages/pilgi/ExamSelect';
@@ -66,6 +67,7 @@ function AppLayout() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           {/* 무료: 시험안내 */}
           <Route path="/pilgi" element={<PilgiHome />} />
