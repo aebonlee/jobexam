@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import {createContext, useContext, useEffect, useState, useCallback} from 'react';
 import { supabase, setSharedSession, getSharedSession, clearSharedSession, TABLES } from '../lib/supabase';
 import { useToast } from './ToastContext';
 import { SUPERADMIN_EMAILS } from '../config/admin';
 import { useIdleTimeout } from '../hooks/useIdleTimeout';
+import ProfileCompleteModal from '../components/ProfileCompleteModal';
 
 const AuthContext = createContext({});
 
@@ -11,8 +12,18 @@ const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [_userProfile, _setUserProfile] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { showToast } = useToast();
+
+  
+  // ─── 프로필 완성 체크용 user_profiles 로드 ───
+  const _loadUserProfile = useCallback(async (uid: string) => {
+    try {
+      const { data } = await supabase!.from('user_profiles').select('name,phone').eq('id', uid).maybeSingle();
+      _setUserProfile(data);
+    } catch { _setUserProfile(null); }
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -137,14 +148,20 @@ export function AuthProvider({ children }) {
   useIdleTimeout({
   enabled: !!user,
   onTimeout: () => {
-  supabase.auth.signOut();
+  supabase?.auth.signOut();
   clearSharedSession();
   },
   });
+  const refreshProfile = useCallback(async () => { if (user) await _loadUserProfile(user.id); }, [user, _loadUserProfile]);
+  const needsProfileCompletion = !!user && !!_userProfile && (!_userProfile.name || !_userProfile.phone);
+
 
   return (
     <AuthContext.Provider value={{ user, loading, isAdmin, signInWithGoogle, signInWithKakao, signOut }}>
       {children}
+      {needsProfileCompletion && user && (
+        <ProfileCompleteModal user={user} onComplete={refreshProfile} />
+      )}
     </AuthContext.Provider>
   );
 }
