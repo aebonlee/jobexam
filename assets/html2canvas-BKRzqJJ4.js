@@ -1,0 +1,1 @@
+import{n as e}from"./index-yMopxMmi.js";export default e();
