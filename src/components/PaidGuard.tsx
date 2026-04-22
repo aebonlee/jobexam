@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import type { ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 
 interface PaidGuardProps {
   children: ReactNode;
@@ -9,10 +9,40 @@ interface PaidGuardProps {
 }
 
 export default function PaidGuard({ children, allowFreeTrial = false }: PaidGuardProps) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const { hasAccess, freeTrialRemaining, loading: subLoading } = useSubscription();
+  const [timedOut, setTimedOut] = useState(false);
+
+  // 로딩 상태 10초 타임아웃 (무한 스피너 방지)
+  useEffect(() => {
+    if (!authLoading && !subLoading) {
+      setTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setTimedOut(true), 10000);
+    return () => clearTimeout(t);
+  }, [authLoading, subLoading]);
+
+  // 관리자는 구독 확인 없이 즉시 바이패스
+  if (!authLoading && isAdmin) {
+    return <>{children}</>;
+  }
 
   if (authLoading || subLoading) {
+    if (timedOut) {
+      return (
+        <div className="paid-guard-block">
+          <div className="paid-guard-card">
+            <i className="fa-solid fa-circle-exclamation" />
+            <h2>연결 지연</h2>
+            <p>서버 연결이 지연되고 있습니다. 페이지를 새로고침해 주세요.</p>
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>
+              새로고침
+            </button>
+          </div>
+        </div>
+      );
+    }
     return <div className="loading-page"><div className="loading-spinner" /></div>;
   }
 
@@ -27,12 +57,6 @@ export default function PaidGuard({ children, allowFreeTrial = false }: PaidGuar
         </div>
       </div>
     );
-  }
-
-  // 최고관리자 바이패스
-  const email = (user.email || '').toLowerCase();
-  if (email === 'aebon@kakao.com' || email === 'aebon@kyonggi.ac.kr') {
-    return <>{children}</>;
   }
 
   // 유료 접근 권한 있음

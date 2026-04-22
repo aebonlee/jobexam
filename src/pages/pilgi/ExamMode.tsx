@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Timer from '../../components/Timer';
 import QuestionCard from '../../components/QuestionCard';
@@ -11,6 +11,8 @@ import { calculatePilgiScore, checkPass } from '../../utils/scoring';
 import { EXAM_CONFIG, SUBJECTS } from '../../config/site';
 import SEOHead from '../../components/SEOHead';
 
+const EXAM_STORAGE_KEY = 'jobexam_exam_progress';
+
 export default function ExamMode() {
   const { id } = useParams();
   const location = useLocation();
@@ -18,14 +20,49 @@ export default function ExamMode() {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const [questions] = useState(location.state?.questions || []);
-  const [session] = useState(location.state?.session || null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
+  const [questions] = useState(() => {
+    if (location.state?.questions?.length) return location.state.questions;
+    try {
+      const saved = sessionStorage.getItem(EXAM_STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); return p.questions || []; }
+    } catch { /* ignore */ }
+    return [];
+  });
+  const [session] = useState(() => {
+    if (location.state?.session) return location.state.session;
+    try {
+      const saved = sessionStorage.getItem(EXAM_STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); return p.session || null; }
+    } catch { /* ignore */ }
+    return null;
+  });
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (location.state?.questions?.length) return 0;
+    try {
+      const saved = sessionStorage.getItem(EXAM_STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); return p.currentIndex || 0; }
+    } catch { /* ignore */ }
+    return 0;
+  });
+  const [answers, setAnswers] = useState(() => {
+    if (location.state?.questions?.length) return {};
+    try {
+      const saved = sessionStorage.getItem(EXAM_STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); return p.answers || {}; }
+    } catch { /* ignore */ }
+    return {};
+  });
   const [bookmarkedIds, setBookmarkedIds] = useState([]);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [startTime] = useState(Date.now());
+  const [startTime] = useState(() => {
+    if (location.state?.questions?.length) return Date.now();
+    try {
+      const saved = sessionStorage.getItem(EXAM_STORAGE_KEY);
+      if (saved) { const p = JSON.parse(saved); return p.startTime || Date.now(); }
+    } catch { /* ignore */ }
+    return Date.now();
+  });
   const [displayMode, setDisplayMode] = useState(() =>
     localStorage.getItem('jobexam-exam-layout') || 'single'
   );
@@ -50,13 +87,23 @@ export default function ExamMode() {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   }, []);
 
+  // sessionStorage 자동저장 (모바일 앱 전환 대비)
+  useEffect(() => {
+    if (questions.length) {
+      sessionStorage.setItem(EXAM_STORAGE_KEY, JSON.stringify({
+        questions, session, answers, currentIndex, startTime,
+      }));
+    }
+  }, [answers, currentIndex, questions, session, startTime]);
+
   // Load bookmarks from Supabase
   useEffect(() => {
     if (!user) return;
     supabase.from(TABLES.BOOKMARKS)
       .select('question_id')
       .eq('user_id', user.id)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.warn('북마크 로드 실패:', error); return; }
         if (data) setBookmarkedIds(data.map(b => b.question_id));
       });
   }, [user]);
@@ -66,26 +113,31 @@ export default function ExamMode() {
     if (isBookmarked) {
       setBookmarkedIds(prev => prev.filter(id => id !== questionId));
       if (user) {
-        await supabase.from(TABLES.BOOKMARKS)
+        const { error } = await supabase.from(TABLES.BOOKMARKS)
           .delete()
           .eq('user_id', user.id)
           .eq('question_id', questionId);
+        if (error) {
+          setBookmarkedIds(prev => [...prev, questionId]);
+          showToast('북마크 해제에 실패했습니다.', 'error');
+          return;
+        }
       }
       showToast('북마크가 해제되었습니다.', 'info');
     } else {
       setBookmarkedIds(prev => [...prev, questionId]);
       if (user) {
-        await supabase.from(TABLES.BOOKMARKS)
+        const { error } = await supabase.from(TABLES.BOOKMARKS)
           .insert({ user_id: user.id, question_id: questionId });
+        if (error) {
+          setBookmarkedIds(prev => prev.filter(id => id !== questionId));
+          showToast('북마크 추가에 실패했습니다.', 'error');
+          return;
+        }
       }
       showToast('북마크에 추가되었습니다.', 'success');
     }
   }, [user, bookmarkedIds, showToast]);
-
-  const handleTimeUp = useCallback(() => {
-    showToast('시간이 종료되었습니다. 자동 제출합니다.', 'info');
-    handleSubmit();
-  }, []);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -121,28 +173,33 @@ export default function ExamMode() {
         // Update wrong answers
         const wrongQuestions = questions.filter(q => answers[q.id] && answers[q.id] !== q.correct_answer);
         for (const q of wrongQuestions) {
-          const { data: existing } = await supabase
-            .from(TABLES.WRONG_ANSWERS)
-            .select('id, wrong_count')
-            .eq('user_id', user.id)
-            .eq('question_id', q.id)
-            .single();
+          try {
+            const { data: existing } = await supabase
+              .from(TABLES.WRONG_ANSWERS)
+              .select('id, wrong_count')
+              .eq('user_id', user.id)
+              .eq('question_id', q.id)
+              .maybeSingle();
 
-          if (existing) {
-            await supabase.from(TABLES.WRONG_ANSWERS)
-              .update({ wrong_count: existing.wrong_count + 1, resolved: false })
-              .eq('id', existing.id);
-          } else {
-            await supabase.from(TABLES.WRONG_ANSWERS).insert({
-              user_id: user.id,
-              question_id: q.id,
-              wrong_count: 1,
-              resolved: false,
-            });
+            if (existing) {
+              await supabase.from(TABLES.WRONG_ANSWERS)
+                .update({ wrong_count: existing.wrong_count + 1, resolved: false })
+                .eq('id', existing.id);
+            } else {
+              await supabase.from(TABLES.WRONG_ANSWERS).insert({
+                user_id: user.id,
+                question_id: q.id,
+                wrong_count: 1,
+                resolved: false,
+              });
+            }
+          } catch (wErr) {
+            console.warn('오답 기록 실패:', q.id, wErr);
           }
         }
       }
 
+      sessionStorage.removeItem(EXAM_STORAGE_KEY);
       navigate(`/pilgi/result/${session?.id || 'local'}`, {
         state: { questions, answers, session: { ...session, ...resultData }, subjectScores },
         replace: true,
@@ -150,7 +207,7 @@ export default function ExamMode() {
     } catch (err: any) {
       console.error(err);
       showToast('결과 저장에 실패했습니다.', 'error');
-      // Navigate anyway
+      sessionStorage.removeItem(EXAM_STORAGE_KEY);
       navigate(`/pilgi/result/${session?.id || 'local'}`, {
         state: { questions, answers, session: { ...session, ...resultData }, subjectScores },
         replace: true,
@@ -158,6 +215,14 @@ export default function ExamMode() {
     }
     setSubmitting(false);
   };
+
+  const handleSubmitRef = useRef(handleSubmit);
+  handleSubmitRef.current = handleSubmit;
+
+  const handleTimeUp = useCallback(() => {
+    showToast('시간이 종료되었습니다. 자동 제출합니다.', 'info');
+    handleSubmitRef.current();
+  }, [showToast]);
 
   if (!questions.length) return null;
 

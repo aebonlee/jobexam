@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -8,55 +9,62 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import SubscriptionBanner from './components/SubscriptionBanner';
 import PaidGuard from './components/PaidGuard';
+import AdminGuard from './components/AdminGuard';
 
+// 핵심 페이지 (즉시 로드)
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
 
-import PilgiHome from './pages/pilgi/PilgiHome';
-import ExamSelect from './pages/pilgi/ExamSelect';
-import StudyMode from './pages/pilgi/StudyMode';
-import ExamMode from './pages/pilgi/ExamMode';
-import ExamResult from './pages/pilgi/ExamResult';
-import QuestionReview from './pages/pilgi/QuestionReview';
+// 나머지 페이지 (코드 스플리팅)
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 
-import SilgiHome from './pages/silgi/SilgiHome';
-import PracticeMode from './pages/silgi/PracticeMode';
-import PracticeResult from './pages/silgi/PracticeResult';
-import KeyTerms from './pages/silgi/KeyTerms';
-import SilgiExamList from './pages/silgi/SilgiExamList';
-import SilgiExamDetail from './pages/silgi/SilgiExamDetail';
-import SilgiFrequent from './pages/silgi/SilgiFrequent';
+const PilgiHome = lazy(() => import('./pages/pilgi/PilgiHome'));
+const ExamSelect = lazy(() => import('./pages/pilgi/ExamSelect'));
+const StudyMode = lazy(() => import('./pages/pilgi/StudyMode'));
+const ExamMode = lazy(() => import('./pages/pilgi/ExamMode'));
+const ExamResult = lazy(() => import('./pages/pilgi/ExamResult'));
+const QuestionReview = lazy(() => import('./pages/pilgi/QuestionReview'));
 
-import Dashboard from './pages/dashboard/Dashboard';
-import StudyHistory from './pages/dashboard/StudyHistory';
+const SilgiHome = lazy(() => import('./pages/silgi/SilgiHome'));
+const PracticeMode = lazy(() => import('./pages/silgi/PracticeMode'));
+const PracticeResult = lazy(() => import('./pages/silgi/PracticeResult'));
+const KeyTerms = lazy(() => import('./pages/silgi/KeyTerms'));
+const SilgiExamList = lazy(() => import('./pages/silgi/SilgiExamList'));
+const SilgiExamDetail = lazy(() => import('./pages/silgi/SilgiExamDetail'));
+const SilgiFrequent = lazy(() => import('./pages/silgi/SilgiFrequent'));
 
-import Bookmarks from './pages/study/Bookmarks';
-import WrongAnswers from './pages/study/WrongAnswers';
+const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'));
+const StudyHistory = lazy(() => import('./pages/dashboard/StudyHistory'));
 
-import ExamInfo from './pages/info/ExamInfo';
+const Bookmarks = lazy(() => import('./pages/study/Bookmarks'));
+const WrongAnswers = lazy(() => import('./pages/study/WrongAnswers'));
 
-import LearnHome from './pages/learn/LearnHome';
-import SubjectStudy from './pages/learn/SubjectStudy';
-import StudySummary from './pages/learn/StudySummary';
+const ExamInfo = lazy(() => import('./pages/info/ExamInfo'));
 
-import PracticeHome from './pages/practice/PracticeHome';
+const LearnHome = lazy(() => import('./pages/learn/LearnHome'));
+const SubjectStudy = lazy(() => import('./pages/learn/SubjectStudy'));
+const StudySummary = lazy(() => import('./pages/learn/StudySummary'));
 
-import ServiceIntro from './pages/about/ServiceIntro';
-import InstructorIntro from './pages/about/InstructorIntro';
-import UsageGuide from './pages/about/UsageGuide';
-import Pricing from './pages/about/Pricing';
-import Terms from './pages/about/Terms';
-import Privacy from './pages/about/Privacy';
+const PracticeHome = lazy(() => import('./pages/practice/PracticeHome'));
 
-import Checkout from './pages/payment/Checkout';
-import Confirmation from './pages/payment/Confirmation';
-import OrderHistory from './pages/payment/OrderHistory';
-import CouponRedeem from './pages/payment/CouponRedeem';
+const ServiceIntro = lazy(() => import('./pages/about/ServiceIntro'));
+const InstructorIntro = lazy(() => import('./pages/about/InstructorIntro'));
+const UsageGuide = lazy(() => import('./pages/about/UsageGuide'));
+const Pricing = lazy(() => import('./pages/about/Pricing'));
+const Terms = lazy(() => import('./pages/about/Terms'));
+const Privacy = lazy(() => import('./pages/about/Privacy'));
 
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminGuard from './components/AdminGuard';
+const Checkout = lazy(() => import('./pages/payment/Checkout'));
+const Confirmation = lazy(() => import('./pages/payment/Confirmation'));
+const OrderHistory = lazy(() => import('./pages/payment/OrderHistory'));
+const CouponRedeem = lazy(() => import('./pages/payment/CouponRedeem'));
+
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+
+function PageLoader() {
+  return <div className="loading-page"><div className="loading-spinner" /></div>;
+}
 
 function AppLayout() {
   return (
@@ -64,6 +72,7 @@ function AppLayout() {
       <Navbar />
       <SubscriptionBanner />
       <main id="main-content">
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
@@ -125,6 +134,7 @@ function AppLayout() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
       <Footer />
     </div>

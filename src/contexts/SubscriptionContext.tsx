@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { checkSubscription, checkFreeTrial, isExpiringSoon } from '../utils/subscription';
 import { supabase, TABLES } from '../lib/supabase';
@@ -46,12 +46,13 @@ function loadAccessLocal(userId: string) {
 const SubscriptionContext = createContext<SubscriptionState | null>(null);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [hasAccess, setHasAccess] = useState(false);
   const [subscription, setSubscription] = useState<any>(null);
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [freeTrialRemaining, setFreeTrialRemaining] = useState(1);
   const [loading, setLoading] = useState(true);
+  const refreshSeq = useRef(0);
 
   const grantAccess = useCallback((expires: Date, sub?: any) => {
     const s = sub || { plan_type: 'coupon', payment_method: 'coupon' };
@@ -63,6 +64,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const refresh = useCallback(async () => {
+    const seq = ++refreshSeq.current;
+
     if (!user) {
       setHasAccess(false);
       setSubscription(null);
@@ -70,6 +73,27 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setFreeTrialRemaining(1);
       setLoading(false);
       return;
+    }
+
+    // 관리자는 즉시 접근 허용 (DB 쿼리 불필요)
+    if (isAdmin) {
+      setHasAccess(true);
+      setSubscription({ plan_type: 'admin' });
+      setExpiresAt(new Date('2099-12-31'));
+      setFreeTrialRemaining(0);
+      setLoading(false);
+      return;
+    }
+
+    // localStorage 캐시가 있으면 즉시 사용 (스피너 방지)
+    const cached = loadAccessLocal(user.id);
+    if (cached) {
+      setHasAccess(true);
+      setSubscription(cached.subscription);
+      setExpiresAt(cached.expiresAt);
+      setLoading(false);
+    } else {
+      setLoading(true);
     }
 
     // 실패한 주문 자동 복구
@@ -94,43 +118,51 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
     } catch { /* 복구 실패 시 다음 로드에서 재시도 */ }
 
-    setLoading(true);
+    if (seq !== refreshSeq.current) return;
+
     try {
-      const [subResult, trialResult] = await Promise.all([
-        checkSubscription(user.id),
-        checkFreeTrial(user.id),
-      ]);
+      const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+        Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
+      const [subResult, trialResult] = await withTimeout(
+        Promise.all([
+          checkSubscription(user.id, { isAdmin }),
+          checkFreeTrial(user.id),
+        ]),
+        10000,
+      );
+
+      if (seq !== refreshSeq.current) return;
 
       if (subResult.hasAccess) {
         setHasAccess(true);
         setSubscription(subResult.subscription);
         setExpiresAt(subResult.expiresAt);
-      } else {
-        // DB 쿼리 실패 시 localStorage fallback
+        if (subResult.expiresAt) {
+          saveAccessLocal(user.id, subResult.expiresAt, subResult.subscription);
+        }
+      } else if (!cached) {
+        setHasAccess(false);
+        setSubscription(null);
+        setExpiresAt(null);
+      }
+      setFreeTrialRemaining(trialResult.canTrial ? 1 : 0);
+    } catch (err) {
+      console.error('Subscription check error:', err);
+      if (seq !== refreshSeq.current) return;
+      if (!cached) {
         const local = loadAccessLocal(user.id);
         if (local) {
           setHasAccess(true);
           setSubscription(local.subscription);
           setExpiresAt(local.expiresAt);
-        } else {
-          setHasAccess(false);
-          setSubscription(null);
-          setExpiresAt(null);
         }
       }
-      setFreeTrialRemaining(trialResult.canTrial ? 1 : 0);
-    } catch (err) {
-      console.error('Subscription check error:', err);
-      // 에러 시에도 localStorage fallback
-      const local = user?.id ? loadAccessLocal(user.id) : null;
-      if (local) {
-        setHasAccess(true);
-        setSubscription(local.subscription);
-        setExpiresAt(local.expiresAt);
-      }
     }
-    setLoading(false);
-  }, [user]);
+    if (seq === refreshSeq.current) {
+      setLoading(false);
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     refresh();

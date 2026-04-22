@@ -7,20 +7,17 @@ import { supabase, TABLES } from '../lib/supabase';
 /**
  * 현재 유효한 구독 조회
  * @param {string} userId
+ * @param {{ isAdmin?: boolean }} options
  * @returns {Promise<{hasAccess: boolean, subscription: object|null, expiresAt: Date|null}>}
  */
-export async function checkSubscription(userId) {
+export async function checkSubscription(userId, { isAdmin = false } = {}) {
   if (!userId) return { hasAccess: false, subscription: null, expiresAt: null };
 
-  // 최고관리자 바이패스: 이메일 확인
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    const email = (user?.email || '').toLowerCase();
-    if (email === 'aebon@kakao.com' || email === 'aebon@kyonggi.ac.kr') {
-      const farFuture = new Date('2099-12-31');
-      return { hasAccess: true, subscription: { plan_type: 'admin' }, expiresAt: farFuture };
-    }
-  } catch { /* skip */ }
+  // 관리자 바이패스 (AuthContext에서 role 기반으로 판단)
+  if (isAdmin) {
+    const farFuture = new Date('2099-12-31');
+    return { hasAccess: true, subscription: { plan_type: 'admin' }, expiresAt: farFuture };
+  }
 
   const now = new Date();
 
