@@ -53,30 +53,26 @@ export function AuthProvider({ children }) {
         const email = (currentUser.email || currentUser.user_metadata?.email || '').toLowerCase();
         const name = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
 
-        // 즉시 이메일 기반 관리자 판별 (DB 쿼리 전)
+        // 즉시 이메일 기반 관리자 판별 (DB 쿼리 불필요)
         const isSuperByEmail = checkSuperAdminByEmail(currentUser);
         if (isSuperByEmail) setIsAdmin(true);
 
-        // 프로필 upsert와 DB 관리자 확인을 병렬 실행 (속도 개선)
+        // 프로필 upsert + 관리자 DB 확인은 백그라운드 (UI 차단 안 함)
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          const profileWork = (async () => {
+          // 프로필 upsert (fire-and-forget)
+          (async () => {
             try {
               await supabase.from(TABLES.PROFILES).upsert({
                 id: currentUser.id,
                 email,
                 ...(name ? { name } : {}),
-              }, {
-                onConflict: 'id',
-                ignoreDuplicates: false,
-              });
+              }, { onConflict: 'id', ignoreDuplicates: false });
             } catch (err) {
               console.warn('profiles upsert 실패:', err);
             }
-
             try {
               const upsertData: Record<string, unknown> = {
-                id: currentUser.id,
-                email,
+                id: currentUser.id, email,
                 display_name: name || '',
                 provider: currentUser.app_metadata?.provider || 'email',
                 signup_domain: window.location.hostname,
@@ -87,45 +83,41 @@ export function AuthProvider({ children }) {
             } catch (err) {
               console.warn('user_profiles upsert 실패:', err);
             }
-
-            // upsert 성공 여부와 무관하게 항상 프로필 로드
             await _loadUserProfile(currentUser.id);
           })();
 
-          const adminWork = (async () => {
+          // 관리자 DB 확인 (fire-and-forget, 결과로 isAdmin 업데이트)
+          (async () => {
             try {
               const { data } = await supabase
-                .from(TABLES.PROFILES)
-                .select('role')
-                .eq('id', currentUser.id)
-                .maybeSingle();
+                .from(TABLES.PROFILES).select('role')
+                .eq('id', currentUser.id).maybeSingle();
               setIsAdmin(isSuperByEmail || data?.role === 'admin' || data?.role === 'superadmin');
             } catch {
               setIsAdmin(isSuperByEmail);
             }
             adminCheckDone.current = true;
           })();
-
-          await Promise.all([profileWork, adminWork]);
-        } else {
-          // TOKEN_REFRESHED 등 다른 이벤트에서도 관리자 확인
-          try {
-            const { data } = await supabase
-              .from(TABLES.PROFILES)
-              .select('role')
-              .eq('id', currentUser.id)
-              .maybeSingle();
-            setIsAdmin(isSuperByEmail || data?.role === 'admin' || data?.role === 'superadmin');
-          } catch {
-            setIsAdmin(isSuperByEmail);
-          }
-          adminCheckDone.current = true;
+        } else if (event === 'TOKEN_REFRESHED') {
+          // TOKEN_REFRESHED: 관리자 재확인 (fire-and-forget)
+          (async () => {
+            try {
+              const { data } = await supabase
+                .from(TABLES.PROFILES).select('role')
+                .eq('id', currentUser.id).maybeSingle();
+              setIsAdmin(isSuperByEmail || data?.role === 'admin' || data?.role === 'superadmin');
+            } catch {
+              setIsAdmin(isSuperByEmail);
+            }
+            adminCheckDone.current = true;
+          })();
         }
       } else {
         setIsAdmin(false);
         adminCheckDone.current = true;
       }
 
+      // loading=false 즉시 설정 (DB 작업 완료 대기 안 함)
       if (event === 'INITIAL_SESSION') {
         if (!currentUser) {
           const rt = getSharedSession();
@@ -135,7 +127,7 @@ export function AuthProvider({ children }) {
               if (!data.session) {
                 clearSharedSession();
               } else {
-                return;
+                return; // SIGNED_IN 이벤트에서 처리
               }
             } catch { clearSharedSession(); }
           }
@@ -152,13 +144,13 @@ export function AuthProvider({ children }) {
       }
     });
 
-    // Fallback: 15초 타임아웃 (프로필 upsert + 관리자 확인 시간 확보)
+    // Fallback: 5초 타임아웃 (공유 세션 복구 대비)
     const fallback = setTimeout(() => {
       setLoading((prev) => {
         if (prev) console.warn('Auth: timeout, forcing loading=false');
         return false;
       });
-    }, 15000);
+    }, 5000);
 
     return () => {
       subscription.unsubscribe();

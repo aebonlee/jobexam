@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -66,12 +66,54 @@ function PageLoader() {
   return <div className="loading-page"><div className="loading-spinner" /></div>;
 }
 
+/** Lazy 로딩 실패 시 자동 새로고침 (배포 후 chunk 해시 변경 대응) */
+class ChunkErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    if (error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('Loading chunk') ||
+        error.message?.includes('Loading CSS chunk')) {
+      const key = 'chunk_reload_' + window.location.pathname;
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        window.location.reload();
+        return;
+      }
+    }
+    console.error('ChunkErrorBoundary:', error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="paid-guard-block">
+          <div className="paid-guard-card">
+            <i className="fa-solid fa-circle-exclamation" />
+            <h2>페이지 로딩 실패</h2>
+            <p>페이지를 불러오지 못했습니다. 새로고침해 주세요.</p>
+            <button className="btn btn-primary" onClick={() => window.location.reload()}>
+              새로고침
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AppLayout() {
   return (
     <div className="app-layout">
       <Navbar />
       <SubscriptionBanner />
       <main id="main-content">
+        <ChunkErrorBoundary>
         <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -135,6 +177,7 @@ function AppLayout() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </ChunkErrorBoundary>
       </main>
       <Footer />
     </div>
