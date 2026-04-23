@@ -1,1 +1,0 @@
-import{i as e,t}from"./vendor-0O6AGl4b.js";import{n}from"./AuthContext-DL2UZCm9.js";var r=t();function i({children:t}){let{user:i,loading:a}=n();return a?(0,r.jsx)(`div`,{className:`loading-page`,children:(0,r.jsx)(`div`,{className:`loading-spinner`})}):i?t:(0,r.jsx)(e,{to:`/login`,replace:!0})}export{i as t};
