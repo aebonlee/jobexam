@@ -4,9 +4,9 @@ import { SUBJECTS } from '../config/site';
 
 Chart.register(...registerables);
 
-export function RadarChart({ scores }) {
-  const canvasRef = useRef(null);
-  const chartRef = useRef(null);
+export function RadarChart({ scores }: { scores: Record<string, number> }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart | null>(null);
 
   useEffect(() => {
     if (chartRef.current) chartRef.current.destroy();
@@ -42,7 +42,7 @@ export function RadarChart({ scores }) {
             grid: { color: 'rgba(0,0,0,0.08)' },
             angleLines: { color: 'rgba(0,0,0,0.08)' },
             pointLabels: {
-              font: { size: 12, weight: '600', family: 'Noto Sans KR' },
+              font: { size: 12, weight: 'bold' as const, family: 'Noto Sans KR' },
               color: '#4B5563',
             },
           },
@@ -68,9 +68,9 @@ export function RadarChart({ scores }) {
   );
 }
 
-export function BarChart({ sessions }) {
-  const canvasRef = useRef(null);
-  const chartRef = useRef(null);
+export function BarChart({ sessions }: { sessions: any[] }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart | null>(null);
 
   useEffect(() => {
     if (chartRef.current) chartRef.current.destroy();

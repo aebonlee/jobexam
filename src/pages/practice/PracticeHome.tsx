@@ -15,7 +15,7 @@ export default function PracticeHome() {
 
       <section className="container" style={{ paddingTop: 40, paddingBottom: 60 }}>
         <div className="practice-grid">
-          <Link to="/pilgi" className="practice-card" style={{ '--card-color': '#3B82F6' }}>
+          <Link to="/pilgi" className="practice-card" style={{ '--card-color': '#3B82F6' } as React.CSSProperties}>
             <div className="practice-card-icon" style={{ background: '#3B82F6' }}>
               <i className="fa-solid fa-desktop" />
             </div>
@@ -33,7 +33,7 @@ export default function PracticeHome() {
             </div>
           </Link>
 
-          <Link to="/silgi" className="practice-card" style={{ '--card-color': '#10B981' }}>
+          <Link to="/silgi" className="practice-card" style={{ '--card-color': '#10B981' } as React.CSSProperties}>
             <div className="practice-card-icon" style={{ background: '#10B981' }}>
               <i className="fa-solid fa-file-pen" />
             </div>

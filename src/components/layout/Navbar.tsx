@@ -17,10 +17,10 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showMobileColorPicker, setShowMobileColorPicker] = useState(false);
-  const [mobileSubnavOpen, setMobileSubnavOpen] = useState({});
+  const [mobileSubnavOpen, setMobileSubnavOpen] = useState<Record<string, boolean>>({});
   const [showCouponTip, setShowCouponTip] = useState(false);
-  const colorPickerRef = useRef(null);
-  const mobileColorPickerRef = useRef(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const mobileColorPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -34,9 +34,9 @@ export default function Navbar() {
   }, [location.pathname]);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) setShowColorPicker(false);
-      if (mobileColorPickerRef.current && !mobileColorPickerRef.current.contains(e.target)) setShowMobileColorPicker(false);
+    function handleClickOutside(e: MouseEvent) {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) setShowColorPicker(false);
+      if (mobileColorPickerRef.current && !mobileColorPickerRef.current.contains(e.target as Node)) setShowMobileColorPicker(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -57,7 +57,7 @@ export default function Navbar() {
 
   const themeIcon = mode === 'auto' ? '\u25D1' : mode === 'light' ? '\u2600\uFE0F' : '\uD83C\uDF19';
 
-  const toggleMobileSubnav = (path) => {
+  const toggleMobileSubnav = (path: string) => {
     setMobileSubnavOpen(prev => ({ ...prev, [path]: !prev[path] }));
   };
 

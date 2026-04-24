@@ -21,7 +21,7 @@ export default function LearnHome() {
             const totalTopics = subject.chapters.reduce((sum, ch) => sum + ch.topics.length, 0);
 
             return (
-              <Link to={`/learn/${code}`} key={code} className="learn-card" style={{ '--card-color': subject.color }}>
+              <Link to={`/learn/${code}`} key={code} className="learn-card" style={{ '--card-color': subject.color } as React.CSSProperties}>
                 <div className="learn-card-icon" style={{ background: subject.color }}>
                   <i className={subject.icon} />
                 </div>

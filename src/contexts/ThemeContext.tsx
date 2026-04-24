@@ -1,6 +1,20 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
-const ThemeContext = createContext();
+interface ColorOption {
+  name: string;
+  color: string;
+}
+
+interface ThemeContextType {
+  mode: string;
+  resolvedTheme: string;
+  toggleTheme: () => void;
+  colorTheme: string;
+  setColorTheme: (color: string) => void;
+  COLOR_OPTIONS: ColorOption[];
+}
+
+const ThemeContext = createContext<ThemeContextType | null>(null);
 
 const COLOR_OPTIONS = [
   { name: 'blue', color: '#1B3A6B' },
@@ -10,12 +24,12 @@ const COLOR_OPTIONS = [
   { name: 'orange', color: '#C87200' },
 ];
 
-function getCookie(name) {
+function getCookie(name: string) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
   return match ? match[2] : null;
 }
 
-function setCookie(name, value, days = 365) {
+function setCookie(name: string, value: string, days = 365) {
   const d = new Date();
   d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
@@ -26,7 +40,7 @@ function getAutoTheme() {
   return hour >= 6 && hour < 18 ? 'light' : 'dark';
 }
 
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState(() => getCookie('theme_mode') || 'auto');
   const [colorTheme, setColorThemeState] = useState(() => getCookie('color_theme') || 'blue');
 
@@ -52,7 +66,7 @@ export function ThemeProvider({ children }) {
     });
   }, []);
 
-  const setColorTheme = useCallback((color) => {
+  const setColorTheme = useCallback((color: string) => {
     setColorThemeState(color);
     setCookie('color_theme', color);
   }, []);

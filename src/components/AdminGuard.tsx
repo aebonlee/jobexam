@@ -1,8 +1,8 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 
-export default function AdminGuard({ children }) {
+export default function AdminGuard({ children }: { children: ReactNode }) {
   const { user, loading, isAdmin } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
 

@@ -1,12 +1,18 @@
-import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 
-const ToastContext = createContext({});
+interface ToastContextType {
+  showToast: (message: string, type?: 'info' | 'success' | 'error') => void;
+}
+
+const ToastContext = createContext<ToastContextType>({
+  showToast: () => {},
+});
 
 let toastId = 0;
 
-function ToastItem({ toast, onRemove }) {
+function ToastItem({ toast, onRemove }: { toast: any; onRemove: (id: number) => void }) {
   const [exiting, setExiting] = useState(false);
-  const timerRef = useRef(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     timerRef.current = setTimeout(() => setExiting(true), 3000);
@@ -42,7 +48,7 @@ function ToastItem({ toast, onRemove }) {
   );
 }
 
-function ToastContainer({ toasts, onRemove }) {
+function ToastContainer({ toasts, onRemove }: { toasts: any[]; onRemove: (id: number) => void }) {
   if (toasts.length === 0) return null;
   return (
     <div className="toast-container" aria-live="polite">
@@ -53,15 +59,15 @@ function ToastContainer({ toasts, onRemove }) {
   );
 }
 
-export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<any[]>([]);
 
-  const showToast = useCallback((message, type = 'info') => {
+  const showToast = useCallback((message: string, type: 'info' | 'success' | 'error' = 'info') => {
     const id = ++toastId;
     setToasts(prev => [...prev, { id, message, type }]);
   }, []);
 
-  const removeToast = useCallback((id) => {
+  const removeToast = useCallback((id: number) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
@@ -73,4 +79,4 @@ export function ToastProvider({ children }) {
   );
 }
 
-export const useToast = () => useContext(ToastContext);
+export const useToast = (): ToastContextType => useContext(ToastContext);

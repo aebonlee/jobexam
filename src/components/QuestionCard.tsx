@@ -114,6 +114,17 @@ function renderTextBlock(text: string) {
   return <span style={{ whiteSpace: 'pre-wrap' }}>{text.trim()}</span>;
 }
 
+interface QuestionCardProps {
+  question: any;
+  selectedAnswer: any;
+  onSelectAnswer?: (answer: number) => void;
+  showResult?: boolean;
+  showExplanation?: boolean;
+  questionIndex: number;
+  isBookmarked?: boolean;
+  onToggleBookmark?: (id: string) => void;
+}
+
 export default function QuestionCard({
   question,
   selectedAnswer,
@@ -123,11 +134,11 @@ export default function QuestionCard({
   questionIndex,
   isBookmarked,
   onToggleBookmark,
-}) {
+}: QuestionCardProps) {
   const { question_text, option_1, option_2, option_3, option_4, correct_answer, explanation } = question;
   const options = [option_1, option_2, option_3, option_4];
 
-  const getOptionClass = (optionIdx) => {
+  const getOptionClass = (optionIdx: number) => {
     const num = optionIdx + 1;
     let cls = 'option-item';
     if (selectedAnswer === num) cls += ' selected';

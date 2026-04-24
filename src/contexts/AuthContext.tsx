@@ -1,11 +1,29 @@
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { supabase, setSharedSession, getSharedSession, clearSharedSession, TABLES } from '../lib/supabase';
 import { useToast } from './ToastContext';
 import { useIdleTimeout } from '../hooks/useIdleTimeout';
 import { SUPERADMIN_EMAILS } from '../config/admin';
 import ProfileCompleteModal from '../components/ProfileCompleteModal';
 
-const AuthContext = createContext({});
+interface AuthContextType {
+  user: any;
+  loading: boolean;
+  isAdmin: boolean;
+  signingIn: boolean;
+  signInWithGoogle: () => Promise<void>;
+  signInWithKakao: () => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  isAdmin: false,
+  signingIn: false,
+  signInWithGoogle: async () => {},
+  signInWithKakao: async () => {},
+  signOut: async () => {},
+});
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 const DISMISS_KEY = 'je_profile_modal_dismissed';
@@ -19,7 +37,7 @@ function checkSuperAdminByEmail(currentUser: any): boolean {
   return allEmails.some(e => SUPERADMIN_EMAILS.includes(e));
 }
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -246,4 +264,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => useContext(AuthContext);

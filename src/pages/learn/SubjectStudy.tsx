@@ -47,7 +47,7 @@ export default function SubjectStudy() {
     <>
       <SEOHead title={`${subject.name} 학습`} description={subject.description} />
 
-      <div className="page-header" style={{ '--subject-color': subject.color }}>
+      <div className="page-header" style={{ '--subject-color': subject.color } as React.CSSProperties}>
         <div className="container">
           <Link to="/learn" className="subject-back-link">
             <i className="fa-solid fa-arrow-left" /> 과목 목록
@@ -84,12 +84,12 @@ export default function SubjectStudy() {
             <div
               key={chIdx}
               className="chapter-accordion"
-              ref={el => (chapterRefs.current[chIdx] = el)}
+              ref={el => { chapterRefs.current[chIdx] = el; }}
             >
               <button
                 className={`chapter-header ${openChapters[chIdx] ? 'open' : ''}`}
                 onClick={() => toggleChapter(chIdx)}
-                style={{ '--chapter-color': subject.color }}
+                style={{ '--chapter-color': subject.color } as React.CSSProperties}
               >
                 <div className="chapter-header-left">
                   <span className="chapter-num" style={{ background: subject.color }}>
@@ -120,7 +120,7 @@ export default function SubjectStudy() {
                         {openTopics[topicKey] && (
                           <div
                             className="topic-content"
-                            style={{ '--topic-accent': subject.color }}
+                            style={{ '--topic-accent': subject.color } as React.CSSProperties}
                             dangerouslySetInnerHTML={{ __html: topic.content }}
                           />
                         )}

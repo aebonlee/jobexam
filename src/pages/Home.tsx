@@ -344,7 +344,7 @@ function LandingHome() {
               width: `${4 + i * 3}px`, height: `${4 + i * 3}px`,
               left: `${10 + i * 15}%`, top: `${20 + (i % 3) * 25}%`,
               '--duration': `${15 + i * 3}s`, '--delay': `${i * 2}s`,
-            }} />
+            } as React.CSSProperties} />
           ))}
         </div>
         <div className="container">
