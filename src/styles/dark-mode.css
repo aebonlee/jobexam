@@ -2043,3 +2043,53 @@ html[data-theme="dark"] .coupon-success p {
 html[data-theme="dark"] .coupon-success > i {
     color: #6EE7B7;
 }
+
+
+/* ── Navbar 액션 버튼 (다크모드 가시성) ── */
+[data-theme="dark"] .theme-toggle,
+[data-theme="dark"] .color-picker-btn,
+[data-theme="dark"] .nav-search-btn {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .theme-toggle svg,
+[data-theme="dark"] .color-picker-btn svg,
+[data-theme="dark"] .nav-search-btn svg {
+    color: #D1D5DB;
+}
+
+[data-theme="dark"] .theme-toggle:hover,
+[data-theme="dark"] .color-picker-btn:hover,
+[data-theme="dark"] .nav-search-btn:hover {
+    border-color: var(--primary-blue-light);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .theme-toggle:hover svg,
+[data-theme="dark"] .color-picker-btn:hover svg,
+[data-theme="dark"] .nav-search-btn:hover svg {
+    color: var(--primary-blue-light);
+}
+
+[data-theme="dark"] .lang-switcher {
+    border-color: var(--primary-blue-light);
+}
+
+[data-theme="dark"] .cart-icon-link { color: #D1D5DB; }
+[data-theme="dark"] .cart-icon-link:hover { color: var(--primary-blue-light); }
+
+[data-theme="dark"] .color-picker-tooltip {
+    background: #1F2937;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .color-picker-arrow {
+    background: #1F2937;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .color-dot { border-color: rgba(255, 255, 255, 0.15); }
+[data-theme="dark"] .color-dot.active {
+    border-color: #F9FAFB;
+    box-shadow: 0 0 0 2px #1F2937, 0 0 0 4px #F9FAFB;
+}
